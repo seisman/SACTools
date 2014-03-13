@@ -298,6 +298,11 @@ typedef struct sac_head
 #define CCS1 "%-8.8s%-8.8s%-8.8s\n"             /* for strings */
 #define CCS2 "%-8.8s%-16.16s\n"                 /* for strings */
 
+/* SAC Header Version Number */
+#define SAC_HEADER_MAJOR_VERSION 6
+/* offset of nvhdr relative to struct SACHEAD */
+#define SAC_VERSION_LOCATION 76
+
 /* number of bytes in header that need to be swapped on PC (int+float) */
 #define HD_SIZE (70*sizeof(float)+40*sizeof(int))
 
@@ -307,4 +312,6 @@ typedef struct sac_head
 /* offset of USER0 relative to pointer to struct SACHEAD */
 #define USERN   40
 
+int ReadSacHead( const char *name, SACHEAD *hd );
+float* ReadSac( const char *name, SACHEAD *hd );
 #endif /* sacio.h */
