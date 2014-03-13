@@ -4,9 +4,9 @@
 
 
 /* function prototype for local use */
-void ByteSwap( char *pt, int n );
+void ByteSwap(char *pt, size_t n);
+int CheckByteOrder(void);   /* keep it for future use */
 int CheckSacHeaderVersion(const SACHEAD hd);
-
 
 /* a SAC structure containing all null values */
 static SACHEAD sac_null = {
@@ -108,7 +108,7 @@ float* ReadSac( const char *name, SACHEAD *hd )
     FILE *strm;
     float *ar;
     int lswap;
-    unsigned sz;
+    size_t sz;
 
     if ( (strm = fopen(name, "rb")) == NULL ) {
         fprintf(stderr, "Unable to open %s\n", name);
@@ -129,7 +129,7 @@ float* ReadSac( const char *name, SACHEAD *hd )
     } else if ( lswap == TRUE )
         ByteSwap( (char *)hd, HD_SIZE );
     
-    sz = hd->npts * sizeof(float);
+    sz = (size_t) hd->npts * sizeof(float);
     if ( (ar = (float *)malloc(sz) ) == NULL ) {
         fprintf(stderr, "Error in allocating memory for reading %s\n", name);
         return NULL;
@@ -150,8 +150,8 @@ float* ReadSac( const char *name, SACHEAD *hd )
     byteswap
 
     IN:
-        char *pt : pointer to byte array
-        int  m   : number of bytes
+        char    *pt : pointer to byte array
+        size_t   m  : number of bytes
     Return: none
 
     Notes:
@@ -160,9 +160,9 @@ float* ReadSac( const char *name, SACHEAD *hd )
         and turning it into [3][2][1][0]
 *******************************************************************************/
 
-void ByteSwap( char *pt, int n ) 
+void ByteSwap( char *pt, size_t n ) 
 {
-    int i;
+    size_t i;
     char tmp;
     for (i=0; i<n; i+=4) {
         tmp = pt[i+3];
@@ -190,7 +190,7 @@ void ByteSwap( char *pt, int n )
         ENDIAN_LITTLE
     
 *******************************************************************************/
-int CheckByteOrder() {
+int CheckByteOrder(void) {
     static int byte_order = ENDIAN_UNKNOWN;
     short int word = 0x0001;
     char *byte = (char *) &word;
