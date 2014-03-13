@@ -6,7 +6,7 @@
 /* function prototype for local use */
 void ByteSwap(char *pt, size_t n);
 int CheckByteOrder(void);   /* keep it for future use */
-int CheckSacHeaderVersion(const SACHEAD hd);
+int CheckSacHeaderVersion(const int nvhdr);
 
 /* a SAC structure containing all null values */
 static SACHEAD sac_null = {
@@ -32,19 +32,19 @@ static SACHEAD sac_null = {
   -12345 , -12345 , -12345 , -12345 , -12345 ,
   -12345 , -12345 , -12345 , -12345 , -12345 ,
    FALSE ,  FALSE ,  FALSE ,  FALSE ,  FALSE ,
-  { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.','.','.','.','.','.','.','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }, { '-','1','2','3','4','5','.','.' },
-  { '-','1','2','3','4','5','.','.' }
+  { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }, { '-','1','2','3','4','5',' ',' ' },
+  { '-','1','2','3','4','5',' ',' ' }
 };
 
 /*******************************************************************************
@@ -77,7 +77,7 @@ int ReadSacHead( const char *name, SACHEAD *hd )
         return -1;
     }
 
-    lswap = CheckSacHeaderVersion( *hd );
+    lswap = CheckSacHeaderVersion( hd->nvhdr );
 
     if ( lswap == -1 ) {
         fprintf(stderr, "Warning: %s not in sac format.\n", name);
@@ -121,7 +121,7 @@ float* ReadSac( const char *name, SACHEAD *hd )
         return NULL;
     }
 
-    lswap = CheckSacHeaderVersion( *hd );
+    lswap = CheckSacHeaderVersion( hd->nvhdr );
 
     if ( lswap == -1 ) {
         fprintf(stderr, "Warning: %s not in sac format.\n", name);
@@ -207,29 +207,23 @@ int CheckByteOrder(void) {
     Description: Determine the byte order of the SAC file
 
     IN: 
-        SACHEAD hd
+        const int nvhdr : nvhdr from header
     
     Return: 
         FALSE   no byte order swap is needed
         TRUE    byte order swap is needed
-        -1      not in sac format
+        -1      not in sac format ( nvhdr != SAC_HEADER_MAJOR_VERSION )
 
 *******************************************************************************/
-int CheckSacHeaderVersion(const SACHEAD hd) {
-    int *ver;
-    int lswap;
-
-    lswap = FALSE;
-    ver = (int *) ( &hd + SAC_VERSION_LOCATION );
-
-    if ( *ver != SAC_HEADER_MAJOR_VERSION ) {
-        ByteSwap( (char*) ver, sizeof(int) );
-        if ( *ver != SAC_HEADER_MAJOR_VERSION ) 
+int CheckSacHeaderVersion(const int nvhdr) {
+    int lswap = FALSE;
+    
+    if ( nvhdr != SAC_HEADER_MAJOR_VERSION ) {
+        ByteSwap( (char*) &nvhdr, sizeof(int) );
+        if ( nvhdr != SAC_HEADER_MAJOR_VERSION ) 
             lswap = -1;
         else 
             lswap = TRUE;
-        // swap back 
-        ByteSwap( (char*) ver, sizeof(int) );
     }
     return lswap;
 }
