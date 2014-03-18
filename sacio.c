@@ -30,7 +30,7 @@ static SACHEAD sac_null = {
   -12345., -12345., -12345., -12345., -12345.,
   -12345., -12345., -12345., -12345., -12345.,
   -12345 , -12345 , -12345 , -12345 , -12345 ,
-  -12345 ,      6 , -12345 , -12345 , -12345 ,
+  -12345 , -12345 , -12345 , -12345 , -12345 ,
   -12345 , -12345 , -12345 , -12345 , -12345 ,
   -12345 , -12345 , -12345 , -12345 , -12345 ,
   -12345 , -12345 , -12345 , -12345 , -12345 ,
@@ -212,7 +212,7 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
 
     tref = 0.;
     if ( (tmark>=-5&&tmark<=-2) || (tmark>=0 && tmark<=9) ) {
-        tref = *((float *) hd + 10 + tmark);
+        tref = *((float *) hd + TMARK + tmark);
         if (fabs(tref+12345.)<0.1){
             fprintf(stderr, "Time mark undefined in %s\n", name);
             return NULL;
@@ -275,6 +275,7 @@ SACHEAD newhdr( float dt, int ns, float b0) {
     hd.iztype   =   IO;
     hd.iftype   =   ITIME;
     hd.leven    =   TRUE;
+    hd.nvhdr    =   SAC_HEADER_MAJOR_VERSION;
     return hd;
 }
 
@@ -397,7 +398,7 @@ int rsachead (const char *name, SACHEAD *hd, FILE *strm) {
     char* buffer;
 
     // read numeric parts of the SAC header
-    if ( fread(hd, SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+    if ( fread(hd, SAC_HEADER_NUMBERS, 1, strm) != 1 ) {
         fprintf(stderr, "Error in reading SAC header %s\n", name);
         return -1;
     }
@@ -408,19 +409,19 @@ int rsachead (const char *name, SACHEAD *hd, FILE *strm) {
         fprintf(stderr, "Warning: %s not in sac format.\n", name);
         return -1;
     } else if ( lswap == TRUE ) {
-        ByteSwap( (char *)hd, SAC_HEADER_NUMBERS_SIZE_BYTES_FILE );
+        ByteSwap( (char *)hd, SAC_HEADER_NUMBERS );
     }
 
     // read string parts of the SAC header
-    if ( (buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE_BYTES_FILE)) == NULL ){
+    if ( (buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE)) == NULL ){
         fprintf(stderr, "Error in allocating memory %s\n", name);
         return -1;
     }
-    if ( fread(buffer, SAC_HEADER_STRINGS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+    if ( fread(buffer, SAC_HEADER_STRINGS_SIZE, 1, strm) != 1 ) {
         fprintf(stderr, "Error in reading SAC header %s\n", name);
         return -1;
     }
-    map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, (char*)buffer);
+    map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS, (char*)buffer);
     free(buffer);
 
     return lswap;
@@ -453,18 +454,18 @@ void map_chdr_out (char *memar, char *buff) {
 int wsachead(const char *name, SACHEAD hd, FILE *strm) {
     char *buffer;
 
-    if ( fwrite(&hd, SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+    if ( fwrite(&hd, SAC_HEADER_NUMBERS, 1, strm) != 1 ) {
         fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
         return -1;
     }
 
-    if ( (buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE_BYTES_FILE)) == NULL ){
+    if ( (buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE)) == NULL ){
         fprintf(stderr, "Error in allocating memory %s\n", name);
         return -1;
     }
-    map_chdr_out((char *)(&hd)+SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, (char *)buffer);
+    map_chdr_out((char *)(&hd)+SAC_HEADER_NUMBERS, (char *)buffer);
 
-    if ( fwrite(buffer, SAC_HEADER_STRINGS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+    if ( fwrite(buffer, SAC_HEADER_STRINGS_SIZE, 1, strm) != 1 ) {
         fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
         return -1;
     }

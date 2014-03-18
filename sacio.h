@@ -1,10 +1,11 @@
 /*******************************************************************************
-    Name:     sac.h
+    Name:     sacio.h
 
     Purpose:  structure for header of a SAC (Seismic Analysis Code)
         data file, and prototype for basic SAC I/O
 
-    Notes:    Key to comment flags describing each field:
+    Notes:    
+    Key to comment flags describing each field:
         Column 1:
             R       required by SAC
            (blank)  optional
@@ -44,8 +45,30 @@
 #ifndef _SACIO_H
 # define _SACIO_H
 
-typedef struct sac_head
-{
+/*******************************************************************************
+                        SAC header structure
+
+    The SAC package is originally implemented in FORTRAN language, and the SAC
+    file format follows the conventions of FORTRAN language. Each character 
+    strings has a length of 8 bytes ( 16 bytes for kevnm ).
+
+    While reimplementing SAC in C, an extra byte is needed since C use '\0' to 
+    mark the termination of a string to avoid wiping out the contents of the 
+    last character.
+
+    The header structure are needed, one for structure in memory and one for 
+    reading/writing header structure from/to disk.
+
+    While reading a file, first read in the numeric part to the header 
+    structure, then read the string part to a temporary buffer, then map 
+    strings from buffer to header structure.
+
+    While writing a file, first write the numeric part from header structure 
+    to disk, then map the strings from header structure to temporary buffer,
+    then write the buffer to disk.
+ 
+*******************************************************************************/
+typedef struct sac_head {
     float delta;            /* RF increment between evenly spaced samples     */
     float depmin;           /*    minimum value of dependent variable         */
     float depmax;           /*    maximum value of dependent variable         */
@@ -181,36 +204,13 @@ typedef struct sac_head
     char  kinst[9];         /*    generic name of recording instrument        */
 } SACHEAD;
 
-typedef struct sac_char_head 
-{
-    char  kstnm[8];         /*  F station name                                */
-    char  kevnm[16];        /*    event name                                  */
-    char  khole[8];         /*    nuclear: hole id; Other: location id;       */
-    char  ko[8];            /*    event origin time id                        */
-    char  ka[8];            /*    1st arrival time id                         */
-    char  kt0[8];           /*    time pick 0 id                              */
-    char  kt1[8];           /*    time pick 1 id                              */
-    char  kt2[8];           /*    time pick 2 id                              */
-    char  kt3[8];           /*    time pick 3 id                              */
-    char  kt4[8];           /*    time pick 4 id                              */
-    char  kt5[8];           /*    time pick 5 id                              */
-    char  kt6[8];           /*    time pick 6 id                              */
-    char  kt7[8];           /*    time pick 7 id                              */
-    char  kt8[8];           /*    time pick 8 id                              */
-    char  kt9[8];           /*    time pick 9 id                              */
-    char  kf[8];            /*    end of event id                             */
-    char  kuser0[8];        /*    User defined variable storage area          */
-    char  kuser1[8];        /*    User defined variable storage area          */
-    char  kuser2[8];        /*    User defined variable storage area          */
-    char  kcmpnm[8];        /*  F channel name, three charaters               */
-    char  knetwk[8];        /*    name of seismic network                     */
-    char  kdatrd[8];        /*    date data was read onto computer            */
-    char  kinst[8];         /*    generic name of recording instrument        */
-} SACCHARHEAD;
+/*******************************************************************************
+                          SAC Enumerated tyep
 
+    Definitions of constants for SAC enumerated data values.
 
-/* definitions of constants for SAC enumerated data values */
-/* undocumented == couldn't find a definition for it (denio, 07/15/88) */
+    undocumented == couldn't find a definition for it (denio, 07/15/88) 
+*******************************************************************************/
 #define ITIME   1       /* file: time series data    */
 #define IRLIM   2       /* file: real&imag spectrum  */
 #define IAMPH   3       /* file: ampl&phas spectrum  */
@@ -315,7 +315,6 @@ typedef struct sac_char_head
 /* True/false definitions */
 #undef FALSE
 #define FALSE   0
-
 #undef TRUE
 #define TRUE    1
 
@@ -325,41 +324,34 @@ typedef struct sac_char_head
 #define CCS1 "%-8.8s%-8.8s%-8.8s\n"             /* for strings */
 #define CCS2 "%-8.8s%-16.16s\n"                 /* for strings */
 
+/* Number of numeric values in the SAC Header  ( 4 bytes) */
+#define SAC_HEADER_NUMBERS      110     /* 70 + 15 + 20 + 5 */
+/* Number of strings in the SAC Header  ( 8 or 9 bytes ) */
+#define SAC_HEADER_STRINGS      24      /* 24 = 23 + 1 */
 
-/* Number of strings in the SAC Header */
-#define SAC_HEADER_STRINGS      24      /* 8 or 9 bytes */
-                                /* 24 = 23 + 1 */
-/* Number of numeric values in the SAC Header */
-#define SAC_HEADER_NUMBERS      110     /* sizeof(float) = 4 */
-                                /* 70 + 15 + 20 + 5 */
-
-/**
- * Size of a number stored on disk or in memory for a SAC Header 
- * This isequivalent to a int on 32 and 64 bit machines
- *   and a int or long int on 32 bit machines
+/* size of a number stored on disk or in memory, 
+ * make sure sizeof(float) == sizeof(int) == 4
  */
 #define SAC_HEADER_SIZEOF_NUMBER    4
+
+/* size of data points on disk or in memory 
+ * make sure sizeof(float) == 4
+ */ 
+#define SAC_DATA_SIZEOF             4
+
 /* Size of a character string stored on disk for a SAC header */
 #define SAC_HEADER_STRING_LENGTH_FILE   8
 /* Size of a character string stored in memory for a SAC header */
 #define SAC_HEADER_STRING_LENGTH        9 
-/* Size of the SAC Header in a file */ 
-#define SAC_HEADER_SIZEOF_FILE  ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER + \
-                                  SAC_HEADER_STRINGS * (SAC_HEADER_STRING_LENGTH_FILE ) )
-/* Size of the SAC Header in memory */ 
-#define SAC_HEADER_SIZEOF       ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER + \
-                                  SAC_HEADER_STRINGS * (SAC_HEADER_STRING_LENGTH ) )
-#define SAC_HEADER_NUMBERS_SIZE_BYTES_FILE ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER )
-#define SAC_HEADER_STRINGS_SIZE_BYTES_FILE ( SAC_HEADER_STRINGS * SAC_HEADER_STRING_LENGTH_FILE )
-
+/* Size of numeric headers on disk */ 
+#define SAC_HEADER_NUMBERS_SIZE ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER )
+/* Size of string headers on disk */ 
+#define SAC_HEADER_STRINGS_SIZE ( SAC_HEADER_STRINGS * SAC_HEADER_STRING_LENGTH_FILE )
 
 /* SAC Header Version Number */
 #define SAC_HEADER_MAJOR_VERSION 6
 /* offset of nvhdr relative to struct SACHEAD */
 #define SAC_VERSION_LOCATION 76
-
-/* number of bytes in header that need to be swapped on PC (int+float) */
-#define HD_SIZE (70*sizeof(float)+40*sizeof(int))
 
 /* offset of T0 relative to pointer to struct SACHEAD */
 #define TMARK   10
@@ -367,9 +359,11 @@ typedef struct sac_char_head
 /* offset of USER0 relative to pointer to struct SACHEAD */
 #define USERN   40
 
-int ReadSacHead( const char *name, SACHEAD *hd );
-float* ReadSac( const char *name, SACHEAD *hd );
-int WriteSac( const char *name, SACHEAD hd, const float *ar );
-float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2);
-SACHEAD newhdr( float dt, int ns, float b0);
+/* function prototype of basic SAC I/O */
+int      ReadSacHead ( const char *name, SACHEAD *hd );
+float   *ReadSac     ( const char *name, SACHEAD *hd );
+int      WriteSac    ( const char *name, SACHEAD hd, const float *ar );
+float   *ReadSacPwd  ( const char *name, SACHEAD *hd, int tmark, float t1, float t2 );
+SACHEAD  newhdr      ( float dt, int ns, float b0);
+
 #endif /* sacio.h */
