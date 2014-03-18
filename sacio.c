@@ -1,3 +1,14 @@
+/*******************************************************************************
+ *                                  sacio.c
+ *  SAC I/O functions:
+ *      ReadSacHead     read SAC header
+ *      ReadSac         read SAC binary data
+ *      ReadSacPdw      read SAC data in a partial data window ( cut option )
+ *      WriteSac        Write SAC binary data
+ *      NewSacHead      Create a new minimal SAC header
+ *
+ ******************************************************************************/
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -5,13 +16,12 @@
 #include "sacio.h"
 
 /* function prototype for local use */
-void ByteSwap(char *pt, size_t n);
-int CheckByteOrder(void);   /* keep it for future use */
-int CheckSacHeaderVersion(const int nvhdr);
-void map_chdr_in(char *memar, char *buff);
-int rsachead (const char *name, SACHEAD *hd, FILE *strm);
-void map_chdr_out (char *memar, char *buff);
-int wsachead(const char *name, SACHEAD hd, FILE *strm);
+void    byte_swap       (char *pt, size_t n);
+int     check_sac_nvhdr (const int nvhdr);
+void    map_chdr_in     (char *memar, char *buff);
+int     read_sac_head   (const char *name, SACHEAD *hd, FILE *strm);
+void    map_chdr_out    (char *memar, char *buff);
+int     write_sac_head  (const char *name, SACHEAD hd, FILE *strm);
 
 /* a SAC structure containing all null values */
 static SACHEAD sac_null = {
@@ -66,17 +76,16 @@ static SACHEAD sac_null = {
 
 *******************************************************************************/
 
-int ReadSacHead( const char *name, SACHEAD *hd ) 
-{
-    FILE *strm;
-    int lswap;
+int ReadSacHead( const char *name, SACHEAD *hd ) {
+    FILE    *strm;
+    int     lswap;
 
-    if ( (strm = fopen(name, "rb")) ==NULL ) {
+    if ( (strm = fopen(name, "rb")) == NULL ) {
         fprintf(stderr, "Unable to open %s\n", name);
         return -1;
     }
 
-    lswap = rsachead (name, hd, strm);
+    lswap = read_sac_head (name, hd, strm);
 
     fclose(strm);
 
@@ -108,7 +117,7 @@ float* ReadSac( const char *name, SACHEAD *hd )
         return NULL;
     }
 
-    lswap = rsachead(name, hd, strm);
+    lswap = read_sac_head(name, hd, strm);
 
     if ( lswap == -1 ) {
         fclose(strm);
@@ -129,7 +138,7 @@ float* ReadSac( const char *name, SACHEAD *hd )
     }
     fclose(strm);
 
-    if ( lswap == TRUE ) ByteSwap( (char*) ar, sz);
+    if ( lswap == TRUE ) byte_swap( (char*) ar, sz);
 
     return ar;
 }
@@ -145,7 +154,7 @@ int WriteSac( const char *name, SACHEAD hd, const float *ar ) {
         return -1;
     }
 
-    if ( wsachead(name, hd, strm) == -1 ) {
+    if ( write_sac_head(name, hd, strm) == -1 ) {
         fclose(strm);
         return -1;
     }
@@ -197,7 +206,7 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
         return NULL;
     }
 
-    lswap = rsachead(name, hd, strm);
+    lswap = read_sac_head(name, hd, strm);
 
     if ( lswap == -1 ) {
         fclose(strm);
@@ -249,14 +258,14 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
     }
     fclose(strm);
 
-    if ( lswap == TRUE ) ByteSwap( (char*) ar, (size_t)nn*SAC_HEADER_SIZEOF_NUMBER);
+    if ( lswap == TRUE ) byte_swap( (char*) ar, (size_t)nn*SAC_HEADER_SIZEOF_NUMBER);
 
     return ar;
 }
 
 
 /*******************************************************************************
-    newhdr:
+    NewSacHead:
 
     Description: create a new SAC header with required fields
 
@@ -265,7 +274,7 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
         int     ns  :   number of points
         float   b0  :   starting time
 *******************************************************************************/
-SACHEAD newhdr( float dt, int ns, float b0) {
+SACHEAD NewSacHead ( float dt, int ns, float b0) {
     SACHEAD hd = sac_null;
     hd.delta    =   dt;
     hd.npts     =   ns;
@@ -280,7 +289,7 @@ SACHEAD newhdr( float dt, int ns, float b0) {
 }
 
 /*******************************************************************************
-    byteswap
+    byte_swap
 
     IN:
         char    *pt : pointer to byte array
@@ -293,7 +302,7 @@ SACHEAD newhdr( float dt, int ns, float b0) {
         and turning it into [3][2][1][0]
 *******************************************************************************/
 
-void ByteSwap( char *pt, size_t n ) 
+void byte_swap( char *pt, size_t n ) 
 {
     size_t i;
     char tmp;
@@ -308,34 +317,8 @@ void ByteSwap( char *pt, size_t n )
     }
 }
 
-#define ENDIAN_BIG 1
-#define ENDIAN_LITTLE 0
-#define ENDIAN_UNKNOWN -1
 /*******************************************************************************
-    CheckByteOrder
-
-    Description: Determine the byte order of the machine
-
-    IN: none
-
-    Return: 
-        ENDIAN_BIG
-        ENDIAN_LITTLE
-    
-*******************************************************************************/
-int CheckByteOrder(void) {
-    static int byte_order = ENDIAN_UNKNOWN;
-    short int word = 0x0001;
-    char *byte = (char *) &word;
-    
-    if ( byte_order == ENDIAN_UNKNOWN ) {
-        byte_order = ( !byte[0] ) ? ENDIAN_BIG : ENDIAN_LITTLE;
-    }
-    return byte_order;
-}
-
-/*******************************************************************************
-    CheckSacHeaderVersion
+    check_sac_nvhdr
 
     Description: Determine the byte order of the SAC file
 
@@ -348,11 +331,11 @@ int CheckByteOrder(void) {
         -1      not in sac format ( nvhdr != SAC_HEADER_MAJOR_VERSION )
 
 *******************************************************************************/
-int CheckSacHeaderVersion(const int nvhdr) {
+int check_sac_nvhdr(const int nvhdr) {
     int lswap = FALSE;
     
     if ( nvhdr != SAC_HEADER_MAJOR_VERSION ) {
-        ByteSwap( (char*) &nvhdr, sizeof(int) );
+        byte_swap( (char*) &nvhdr, sizeof(int) );
         if ( nvhdr != SAC_HEADER_MAJOR_VERSION ) 
             lswap = -1;
         else 
@@ -390,10 +373,10 @@ void map_chdr_in(char *memar, char *buff)
 }
 
 /*******************************************************************************
-    rsachead:
+    read_sac_head:
         read sac header in and deal with possible byte swap.
 *******************************************************************************/
-int rsachead (const char *name, SACHEAD *hd, FILE *strm) {
+int read_sac_head (const char *name, SACHEAD *hd, FILE *strm) {
     int lswap;
     char* buffer;
 
@@ -404,12 +387,12 @@ int rsachead (const char *name, SACHEAD *hd, FILE *strm) {
     }
 
     // Check Header Version and Endian
-    lswap = CheckSacHeaderVersion( hd->nvhdr );
+    lswap = check_sac_nvhdr( hd->nvhdr );
     if ( lswap == -1 ) {
         fprintf(stderr, "Warning: %s not in sac format.\n", name);
         return -1;
     } else if ( lswap == TRUE ) {
-        ByteSwap( (char *)hd, SAC_HEADER_NUMBERS );
+        byte_swap( (char *)hd, SAC_HEADER_NUMBERS );
     }
 
     // read string parts of the SAC header
@@ -451,7 +434,7 @@ void map_chdr_out (char *memar, char *buff) {
     return;
 }
 
-int wsachead(const char *name, SACHEAD hd, FILE *strm) {
+int write_sac_head(const char *name, SACHEAD hd, FILE *strm) {
     char *buffer;
 
     if ( fwrite(&hd, SAC_HEADER_NUMBERS, 1, strm) != 1 ) {
