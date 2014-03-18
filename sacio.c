@@ -1,12 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "sacio.h"
-
 
 /* function prototype for local use */
 void ByteSwap(char *pt, size_t n);
 int CheckByteOrder(void);   /* keep it for future use */
 int CheckSacHeaderVersion(const int nvhdr);
+void map_chdr_in(char *memar, char *buff);
+int rsachead (const char *name, SACHEAD *hd, FILE *strm);
 
 /* a SAC structure containing all null values */
 static SACHEAD sac_null = {
@@ -71,23 +73,11 @@ int ReadSacHead( const char *name, SACHEAD *hd )
         return -1;
     }
 
-    if ( fread(hd, sizeof(SACHEAD), 1, strm) != 1) {
-        fprintf(stderr, "Error in reading SAC header %s\n", name);
-        fclose(strm);
-        return -1;
-    }
-
-    lswap = CheckSacHeaderVersion( hd->nvhdr );
-
-    if ( lswap == -1 ) {
-        fprintf(stderr, "Warning: %s not in sac format.\n", name);
-        return -1;
-    } else if ( lswap == TRUE ) {
-        ByteSwap( (char *)hd, HD_SIZE );
-    }
+    lswap = rsachead (name, hd, strm);
 
     fclose(strm);
-    return 0;
+
+    return ( (lswap == -1) ? -1 : 0 );
 }
 
 /*******************************************************************************
@@ -115,28 +105,23 @@ float* ReadSac( const char *name, SACHEAD *hd )
         return NULL;
     }
 
-    if ( fread(hd, sizeof(SACHEAD), 1, strm) != 1 ) {
-        fprintf(stderr, "Error in reading SAC header %s\n", name);
+    lswap = rsachead(name, hd, strm);
+
+    if ( lswap == -1 ) {
         fclose(strm);
         return NULL;
     }
-
-    lswap = CheckSacHeaderVersion( hd->nvhdr );
-
-    if ( lswap == -1 ) {
-        fprintf(stderr, "Warning: %s not in sac format.\n", name);
-        return NULL;
-    } else if ( lswap == TRUE )
-        ByteSwap( (char *)hd, HD_SIZE );
     
-    sz = (size_t) hd->npts * sizeof(float);
+    sz = (size_t) hd->npts * SAC_HEADER_SIZEOF_NUMBER;
     if ( (ar = (float *)malloc(sz) ) == NULL ) {
         fprintf(stderr, "Error in allocating memory for reading %s\n", name);
+        fclose(strm);
         return NULL;
     }
 
     if ( fread((char*)ar, sz, 1, strm) != 1 ) {
         fprintf(stderr, "Error in reading SAC data %s\n", name);
+        fclose(strm);
         return NULL;
     }
     fclose(strm);
@@ -145,6 +130,31 @@ float* ReadSac( const char *name, SACHEAD *hd )
 
     return ar;
 }
+
+/*******************************************************************************
+    newhdr:
+
+    Description: create a new SAC header with required fields
+
+    IN:
+        float   dt  :   sample interval
+        int     ns  :   number of points
+        float   b0  :   starting time
+*******************************************************************************/
+/*
+SACHEAD newhdr( float dt, int ns, float b0) {
+    SACHEAD hd = sac_null;
+    hd.delta    =   dt;
+    hd.npts     =   ns;
+    hd.b        =   b0;
+    hd.o        =   0.;
+    hd.e        =   b0+(ns-1)*dt;
+    hd.iztype   =   IO;
+    hd.iftype   =   ITIME;
+    hd.leven    =   TRUE;
+    return hd;
+}
+*/
 
 /*******************************************************************************
     byteswap
@@ -225,5 +235,71 @@ int CheckSacHeaderVersion(const int nvhdr) {
         else 
             lswap = TRUE;
     }
+    return lswap;
+}
+
+void map_chdr_in(char *memar, char *buff) 
+{
+    char *ptr1, *ptr2;
+    int i;
+
+    ptr1 = (char *)memar;
+    ptr2 = (char *)buff;
+
+    memcpy(ptr1, ptr2, 8);
+    *(ptr1+8) = '\0';
+    ptr1 += 9;
+    ptr2 += 8;
+
+    memcpy(ptr1, ptr2, 16);
+    *(ptr1+16) = '\0';
+    ptr1 += 18;
+    ptr2 += 16;
+
+    for ( i=0; i<21; i++) {
+        memcpy(ptr1, ptr2, 8);
+        *(ptr1+8) = '\0';
+        ptr1 += 9;
+        ptr2 += 8;
+    }
+
+    return;
+}
+
+/*******************************************************************************
+    rsachead:
+        read sac header in and deal with possible byte swap.
+*******************************************************************************/
+int rsachead (const char *name, SACHEAD *hd, FILE *strm) {
+    int lswap;
+    char* buffer;
+
+    // read numeric parts of the SAC header
+    if ( fread(hd, SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+        fprintf(stderr, "Error in reading SAC header %s\n", name);
+        return -1;
+    }
+
+    // Check Header Version and Endian
+    lswap = CheckSacHeaderVersion( hd->nvhdr );
+    if ( lswap == -1 ) {
+        fprintf(stderr, "Warning: %s not in sac format.\n", name);
+        return -1;
+    } else if ( lswap == TRUE ) {
+        ByteSwap( (char *)hd, SAC_HEADER_NUMBERS_SIZE_BYTES_FILE );
+    }
+
+    // read string parts of the SAC header
+    if ( (buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE_BYTES_FILE)) == NULL ){
+        fprintf(stderr, "Error in allocating memory %s\n", name);
+        return -1;
+    }
+    if ( fread(buffer, SAC_HEADER_STRINGS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+        fprintf(stderr, "Error in reading SAC header %s\n", name);
+        return -1;
+    }
+    map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, (char*)buffer);
+    free(buffer);
+
     return lswap;
 }

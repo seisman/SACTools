@@ -156,6 +156,33 @@ typedef struct sac_head
     int   lovrok;           /*    overwrite permission                        */
     int   lcalda;           /*    true if to calculate distance, azimuth      */
     int   unused18;         /*    reserved for future use                     */
+    char  kstnm[9];         /*  F station name                                */
+    char  kevnm[18];        /*    event name                                  */
+    char  khole[9];         /*    nuclear: hole id; Other: location id;       */
+    char  ko[9];            /*    event origin time id                        */
+    char  ka[9];            /*    1st arrival time id                         */
+    char  kt0[9];           /*    time pick 0 id                              */
+    char  kt1[9];           /*    time pick 1 id                              */
+    char  kt2[9];           /*    time pick 2 id                              */
+    char  kt3[9];           /*    time pick 3 id                              */
+    char  kt4[9];           /*    time pick 4 id                              */
+    char  kt5[9];           /*    time pick 5 id                              */
+    char  kt6[9];           /*    time pick 6 id                              */
+    char  kt7[9];           /*    time pick 7 id                              */
+    char  kt8[9];           /*    time pick 8 id                              */
+    char  kt9[9];           /*    time pick 9 id                              */
+    char  kf[9];            /*    end of event id                             */
+    char  kuser0[9];        /*    User defined variable storage area          */
+    char  kuser1[9];        /*    User defined variable storage area          */
+    char  kuser2[9];        /*    User defined variable storage area          */
+    char  kcmpnm[9];        /*  F channel name, three charaters               */
+    char  knetwk[9];        /*    name of seismic network                     */
+    char  kdatrd[9];        /*    date data was read onto computer            */
+    char  kinst[9];         /*    generic name of recording instrument        */
+} SACHEAD;
+
+typedef struct sac_char_head 
+{
     char  kstnm[8];         /*  F station name                                */
     char  kevnm[16];        /*    event name                                  */
     char  khole[8];         /*    nuclear: hole id; Other: location id;       */
@@ -179,7 +206,7 @@ typedef struct sac_head
     char  knetwk[8];        /*    name of seismic network                     */
     char  kdatrd[8];        /*    date data was read onto computer            */
     char  kinst[8];         /*    generic name of recording instrument        */
-} SACHEAD;
+} SACCHARHEAD;
 
 
 /* definitions of constants for SAC enumerated data values */
@@ -297,6 +324,34 @@ typedef struct sac_head
 #define ICS "%10d%10d%10d%10d%10d\n"            /* for integers */
 #define CCS1 "%-8.8s%-8.8s%-8.8s\n"             /* for strings */
 #define CCS2 "%-8.8s%-16.16s\n"                 /* for strings */
+
+
+/* Number of strings in the SAC Header */
+#define SAC_HEADER_STRINGS      24      /* 8 or 9 bytes */
+                                /* 24 = 23 + 1 */
+/* Number of numeric values in the SAC Header */
+#define SAC_HEADER_NUMBERS      110     /* sizeof(float) = 4 */
+                                /* 70 + 15 + 20 + 5 */
+
+/**
+ * Size of a number stored on disk or in memory for a SAC Header 
+ * This isequivalent to a int on 32 and 64 bit machines
+ *   and a int or long int on 32 bit machines
+ */
+#define SAC_HEADER_SIZEOF_NUMBER    4
+/* Size of a character string stored on disk for a SAC header */
+#define SAC_HEADER_STRING_LENGTH_FILE   8
+/* Size of a character string stored in memory for a SAC header */
+#define SAC_HEADER_STRING_LENGTH        9 
+/* Size of the SAC Header in a file */ 
+#define SAC_HEADER_SIZEOF_FILE  ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER + \
+                                  SAC_HEADER_STRINGS * (SAC_HEADER_STRING_LENGTH_FILE ) )
+/* Size of the SAC Header in memory */ 
+#define SAC_HEADER_SIZEOF       ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER + \
+                                  SAC_HEADER_STRINGS * (SAC_HEADER_STRING_LENGTH ) )
+#define SAC_HEADER_NUMBERS_SIZE_BYTES_FILE ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER )
+#define SAC_HEADER_STRINGS_SIZE_BYTES_FILE ( SAC_HEADER_STRINGS * SAC_HEADER_STRING_LENGTH_FILE )
+
 
 /* SAC Header Version Number */
 #define SAC_HEADER_MAJOR_VERSION 6
