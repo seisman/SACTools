@@ -265,7 +265,6 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
         int     ns  :   number of points
         float   b0  :   starting time
 *******************************************************************************/
-/*
 SACHEAD newhdr( float dt, int ns, float b0) {
     SACHEAD hd = sac_null;
     hd.delta    =   dt;
@@ -278,7 +277,6 @@ SACHEAD newhdr( float dt, int ns, float b0) {
     hd.leven    =   TRUE;
     return hd;
 }
-*/
 
 /*******************************************************************************
     byteswap
