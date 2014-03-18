@@ -302,7 +302,7 @@ SACHEAD NewSacHead ( float dt, int ns, float b0) {
         and turning it into [3][2][1][0]
 *******************************************************************************/
 
-void byte_swap( char *pt, size_t n ) {
+void byte_swap ( char *pt, size_t n ) {
     size_t  i   ;
     char    tmp ;
     for (i=0; i<n; i+=4) {
@@ -330,11 +330,11 @@ void byte_swap( char *pt, size_t n ) {
         -1      not in sac format ( nvhdr != SAC_HEADER_MAJOR_VERSION )
 
 *******************************************************************************/
-int check_sac_nvhdr(const int nvhdr) {
+int check_sac_nvhdr ( const int nvhdr ) {
     int lswap = FALSE;
     
     if ( nvhdr != SAC_HEADER_MAJOR_VERSION ) {
-        byte_swap( (char*) &nvhdr, sizeof(int) );
+        byte_swap( (char*) &nvhdr, SAC_HEADER_SIZEOF_NUMBER );
         if ( nvhdr != SAC_HEADER_MAJOR_VERSION ) 
             lswap = -1;
         else 
