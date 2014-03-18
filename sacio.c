@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 #include "sacio.h"
 
 /* function prototype for local use */
@@ -156,6 +157,101 @@ int WriteSac( const char *name, SACHEAD hd, const float *ar ) {
     } 
     fclose(strm);
     return 0;
+}
+
+/*******************************************************************************
+    ReadSacPwd
+
+    Description:
+        Read portion of data from file.
+
+    Arguments:
+        const char  *name   :   file name
+        SACHEAD     *hd     :   SAC header to be filled
+        int         tmark   :   time mark in SAC header
+                                    -5  ->  b;
+                                    -4  ->  e;
+                                    -3  ->  o;
+                                    -2  ->  a;
+                                    0-9 ->  Tn;
+                                    others -> t=0;
+        float       t1      :   begin time is tmark + t1
+        float       t2      :   end time is tmark + t2
+
+    Return:
+        float pointer to the data array, NULL if failed.
+        
+*******************************************************************************/
+float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) {
+    FILE *strm;
+    int lswap;
+    int nn;
+    float tref;
+    int nt1, nt2;
+    float *ar;
+    float *fpt;
+    int npts;
+
+    if ( (strm = fopen(name, "rb")) == NULL) {
+        fprintf(stderr, "Error in opening %s\n", name);
+        return NULL;
+    }
+
+    lswap = rsachead(name, hd, strm);
+
+    if ( lswap == -1 ) {
+        fclose(strm);
+        return NULL;
+    }
+
+    nn = (int) ( (t2-t1) / hd->delta );
+    if ( nn<=0 || (ar = (float *)malloc((size_t)nn*SAC_HEADER_SIZEOF_NUMBER)) == NULL) {
+        fprintf(stderr, "Errorin allocating memory for reading %s n=%d\n", name, nn);
+        return NULL;
+    }
+
+    tref = 0.;
+    if ( (tmark>=-5&&tmark<=-2) || (tmark>=0 && tmark<=9) ) {
+        tref = *((float *) hd + 10 + tmark);
+        if (fabs(tref+12345.)<0.1){
+            fprintf(stderr, "Time mark undefined in %s\n", name);
+            return NULL;
+        }
+    } 
+    t1 += tref;
+    nt1 = (int) ( ( t1 - hd->b ) / hd->delta );
+    nt2 = nt1 + nn;
+    npts = hd->npts;
+    hd->npts = nn;
+    hd->b   = t1;
+    hd->e   = t1 + nn * hd->delta;
+
+    if ( nt1>npts || nt2 <0 ) return ar;
+    
+    if ( nt1<0 ) {
+        fpt = ar - nt1;
+        nt1 = 0;
+    } else {
+        if ( fseek(strm, nt1*SAC_HEADER_SIZEOF_NUMBER, SEEK_CUR) < 0 ) {
+            fprintf(stderr, "Error in seek %s\n", name);
+            fclose(strm);
+            return NULL;
+        }
+        fpt = ar;
+    }
+    if (nt2>npts) nt2 = npts;
+    nn = nt2 - nt1;
+
+    if ( fread((char *)fpt, (size_t)nn * SAC_HEADER_SIZEOF_NUMBER, 1, strm) != 1 ) {
+        fprintf(stderr, "Error in reading SAC data %s\n", name);
+        fclose(strm);
+        return NULL;
+    }
+    fclose(strm);
+
+    if ( lswap == TRUE ) ByteSwap( (char*) ar, (size_t)nn*SAC_HEADER_SIZEOF_NUMBER);
+
+    return ar;
 }
 
 
