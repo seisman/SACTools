@@ -289,7 +289,7 @@ SACHEAD NewSacHead ( float dt, int ns, float b0) {
 }
 
 /*******************************************************************************
-    byte_swap
+    byte_swap : reverse the byte order of 4 bytes int/float.
 
     IN:
         char    *pt : pointer to byte array
@@ -302,18 +302,17 @@ SACHEAD NewSacHead ( float dt, int ns, float b0) {
         and turning it into [3][2][1][0]
 *******************************************************************************/
 
-void byte_swap( char *pt, size_t n ) 
-{
-    size_t i;
-    char tmp;
+void byte_swap( char *pt, size_t n ) {
+    size_t  i   ;
+    char    tmp ;
     for (i=0; i<n; i+=4) {
-        tmp = pt[i+3];
-        pt[i+3] = pt[i];
-        pt[i] = tmp;
+        tmp     =   pt[i+3];
+        pt[i+3] =   pt[i];
+        pt[i]   =   tmp;
 
-        tmp = pt[i+2];
-        pt[i+2] = pt[i+1];
-        pt[i+1] = tmp;
+        tmp     =   pt[i+2];
+        pt[i+2] =   pt[i+1];
+        pt[i+1] =   tmp;
     }
 }
 
