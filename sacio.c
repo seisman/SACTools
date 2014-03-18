@@ -9,6 +9,8 @@ int CheckByteOrder(void);   /* keep it for future use */
 int CheckSacHeaderVersion(const int nvhdr);
 void map_chdr_in(char *memar, char *buff);
 int rsachead (const char *name, SACHEAD *hd, FILE *strm);
+void map_chdr_out (char *memar, char *buff);
+int wsachead(const char *name, SACHEAD hd, FILE *strm);
 
 /* a SAC structure containing all null values */
 static SACHEAD sac_null = {
@@ -130,6 +132,32 @@ float* ReadSac( const char *name, SACHEAD *hd )
 
     return ar;
 }
+
+int WriteSac( const char *name, SACHEAD hd, const float *ar ) {
+    FILE *strm;
+    size_t sz;
+
+    sz = (size_t)hd.npts * SAC_HEADER_SIZEOF_NUMBER;
+
+    if ( (strm = fopen(name, "wb")) == NULL ) {
+        fprintf(stderr, "Error in opening file for writing %s\n", name);
+        return -1;
+    }
+
+    if ( wsachead(name, hd, strm) == -1 ) {
+        fclose(strm);
+        return -1;
+    }
+
+    if ( fwrite(ar, sz, 1, strm) != 1 ) {
+        fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
+        fclose(strm);
+        return -1;
+    } 
+    fclose(strm);
+    return 0;
+}
+
 
 /*******************************************************************************
     newhdr:
@@ -302,4 +330,50 @@ int rsachead (const char *name, SACHEAD *hd, FILE *strm) {
     free(buffer);
 
     return lswap;
+}
+
+void map_chdr_out (char *memar, char *buff) {
+    char *ptr1, *ptr2;
+    int i;
+    
+    ptr1 = (char *)memar;
+    ptr2 = (char *)buff;
+
+    memcpy(ptr2, ptr1, 8);
+    ptr1 += 9;
+    ptr2 += 8;
+
+    memcpy(ptr2, ptr1, 16);
+    ptr1 += 18;
+    ptr2 += 16;
+
+    for ( i=0; i<21; i++) {
+        memcpy(ptr2, ptr1, 8);
+        ptr1 += 9;
+        ptr2 += 8;
+    }
+
+    return;
+}
+
+int wsachead(const char *name, SACHEAD hd, FILE *strm) {
+    char *buffer;
+
+    if ( fwrite(&hd, SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+        fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
+        return -1;
+    }
+
+    if ( (buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE_BYTES_FILE)) == NULL ){
+        fprintf(stderr, "Error in allocating memory %s\n", name);
+        return -1;
+    }
+    map_chdr_out((char *)(&hd)+SAC_HEADER_NUMBERS_SIZE_BYTES_FILE, (char *)buffer);
+
+    if ( fwrite(buffer, SAC_HEADER_STRINGS_SIZE_BYTES_FILE, 1, strm) != 1 ) {
+        fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
+        return -1;
+    }
+
+    return 0;
 }

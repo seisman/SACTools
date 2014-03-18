@@ -369,4 +369,5 @@ typedef struct sac_char_head
 
 int ReadSacHead( const char *name, SACHEAD *hd );
 float* ReadSac( const char *name, SACHEAD *hd );
+int WriteSac( const char *name, SACHEAD hd, const float *ar );
 #endif /* sacio.h */
