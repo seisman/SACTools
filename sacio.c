@@ -288,6 +288,12 @@ SACHEAD NewSacHead ( float dt, int ns, float b0) {
     return hd;
 }
 
+/******************************************************************************
+ *                                                                            *
+ *              Functions below are only for local use!                       *
+ *                                                                            *
+ ******************************************************************************/ 
+
 /*******************************************************************************
     byte_swap : reverse the byte order of 4 bytes int/float.
 
@@ -330,6 +336,7 @@ void byte_swap ( char *pt, size_t n ) {
         -1      not in sac format ( nvhdr != SAC_HEADER_MAJOR_VERSION )
 
 *******************************************************************************/
+
 int check_sac_nvhdr ( const int nvhdr ) {
     int lswap = FALSE;
     
@@ -343,13 +350,19 @@ int check_sac_nvhdr ( const int nvhdr ) {
     return lswap;
 }
 
-void map_chdr_in(char *memar, char *buff) 
-{
-    char *ptr1, *ptr2;
-    int i;
+/*******************************************************************************
+    map_chdr_in:
+        map strings from buffer to memory
 
-    ptr1 = (char *)memar;
-    ptr2 = (char *)buff;
+*******************************************************************************/
+
+void map_chdr_in ( char *memar, char *buff ) {
+    char    *ptr1;
+    char    *ptr2;
+    int     i;
+
+    ptr1 = memar;
+    ptr2 = buff;
 
     memcpy(ptr1, ptr2, 8);
     *(ptr1+8) = '\0';
