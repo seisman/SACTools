@@ -431,12 +431,18 @@ int read_sac_head (const char *name, SACHEAD *hd, FILE *strm) {
     return lswap;
 }
 
-void map_chdr_out (char *memar, char *buff) {
-    char *ptr1, *ptr2;
-    int i;
+/*******************************************************************************
+    map_chdr_out:
+        map strings from memory to string
+
+*******************************************************************************/
+void map_chdr_out ( char *memar, char *buff ) {
+    char    *ptr1;
+    char    *ptr2;
+    int     i;
     
-    ptr1 = (char *)memar;
-    ptr2 = (char *)buff;
+    ptr1 = memar;
+    ptr2 = buff;
 
     memcpy(ptr2, ptr1, 8);
     ptr1 += 9;
