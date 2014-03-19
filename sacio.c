@@ -389,22 +389,22 @@ void map_chdr_in ( char *memar, char *buff ) {
         read sac header in and deal with possible byte swap.
 *******************************************************************************/
 int read_sac_head (const char *name, SACHEAD *hd, FILE *strm) {
-    int lswap;
-    char* buffer;
+    int     lswap;
+    char*   buffer;
 
-    // read numeric parts of the SAC header
-    if ( fread(hd, SAC_HEADER_NUMBERS, 1, strm) != 1 ) {
+    /* read numeric parts of the SAC header */
+    if ( fread(hd, SAC_HEADER_NUMBERS_SIZE, 1, strm) != 1 ) {
         fprintf(stderr, "Error in reading SAC header %s\n", name);
         return -1;
     }
 
-    // Check Header Version and Endian
+    /* Check Header Version and Endian  */
     lswap = check_sac_nvhdr( hd->nvhdr );
     if ( lswap == -1 ) {
         fprintf(stderr, "Warning: %s not in sac format.\n", name);
         return -1;
     } else if ( lswap == TRUE ) {
-        byte_swap( (char *)hd, SAC_HEADER_NUMBERS );
+        byte_swap( (char *)hd, SAC_HEADER_NUMBERS_SIZE );
     }
 
     // read string parts of the SAC header
@@ -416,7 +416,7 @@ int read_sac_head (const char *name, SACHEAD *hd, FILE *strm) {
         fprintf(stderr, "Error in reading SAC header %s\n", name);
         return -1;
     }
-    map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS, (char*)buffer);
+    map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS_SIZE, (char*)buffer);
     free(buffer);
 
     return lswap;
