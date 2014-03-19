@@ -105,12 +105,11 @@ int ReadSacHead( const char *name, SACHEAD *hd ) {
 
 *******************************************************************************/
 
-float* ReadSac( const char *name, SACHEAD *hd ) 
-{
-    FILE *strm;
-    float *ar;
-    int lswap;
-    size_t sz;
+float* ReadSac( const char *name, SACHEAD *hd ) {
+    FILE    *strm;
+    float   *ar;
+    int     lswap;
+    size_t  sz;
 
     if ( (strm = fopen(name, "rb")) == NULL ) {
         fprintf(stderr, "Unable to open %s\n", name);
@@ -143,9 +142,23 @@ float* ReadSac( const char *name, SACHEAD *hd )
     return ar;
 }
 
+/*******************************************************************************
+    WriteSac
+
+    Description:    write binary SAC data
+
+    IN: 
+        const char *name    :   file name
+        SACHEAD     hd      :   header
+        const float *ar     :   float data array
+
+    Return:
+        -1  :   fail
+        0   :   succeed   
+*******************************************************************************/
 int WriteSac( const char *name, SACHEAD hd, const float *ar ) {
-    FILE *strm;
-    size_t sz;
+    FILE    *strm;
+    size_t  sz;
 
     sz = (size_t)hd.npts * SAC_HEADER_SIZEOF_NUMBER;
 
@@ -192,14 +205,15 @@ int WriteSac( const char *name, SACHEAD hd, const float *ar ) {
         
 *******************************************************************************/
 float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) {
-    FILE *strm;
-    int lswap;
-    int nn;
-    float tref;
-    int nt1, nt2;
-    float *ar;
-    float *fpt;
-    int npts;
+    FILE    *strm;
+    int     lswap;
+    int     nn;
+    float   tref;
+    int     nt1;
+    int     nt2;
+    float   *ar;
+    float   *fpt;
+    int     npts;
 
     if ( (strm = fopen(name, "rb")) == NULL) {
         fprintf(stderr, "Error in opening %s\n", name);
@@ -214,7 +228,7 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
     }
 
     nn = (int) ( (t2-t1) / hd->delta );
-    if ( nn<=0 || (ar = (float *)malloc((size_t)nn*SAC_HEADER_SIZEOF_NUMBER)) == NULL) {
+    if ( nn<=0 || (ar = (float *)malloc((size_t)(nn*SAC_DATA_SIZEOF))) == NULL) {
         fprintf(stderr, "Errorin allocating memory for reading %s n=%d\n", name, nn);
         return NULL;
     }
