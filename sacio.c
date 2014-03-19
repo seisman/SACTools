@@ -249,7 +249,8 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
     hd->b   = t1;
     hd->e   = t1 + nn * hd->delta;
 
-    if ( nt1>npts || nt2 <0 ) return ar;
+    if ( nt1>npts || nt2 <0 ) return ar;    /* return zero filled array */
+    /* maybe warnings are needed! */
     
     if ( nt1<0 ) {
         fpt = ar - nt1;
@@ -265,18 +266,17 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
     if (nt2>npts) nt2 = npts;
     nn = nt2 - nt1;
 
-    if ( fread((char *)fpt, (size_t)nn * SAC_HEADER_SIZEOF_NUMBER, 1, strm) != 1 ) {
+    if ( fread((char *)fpt, (size_t)nn * SAC_DATA_SIZEOF, 1, strm) != 1 ) {
         fprintf(stderr, "Error in reading SAC data %s\n", name);
         fclose(strm);
         return NULL;
     }
     fclose(strm);
 
-    if ( lswap == TRUE ) byte_swap( (char*) ar, (size_t)nn*SAC_HEADER_SIZEOF_NUMBER);
+    if ( lswap == TRUE ) byte_swap( (char*) ar, (size_t)nn*SAC_DATA_SIZEOF);
 
     return ar;
 }
-
 
 /*******************************************************************************
     NewSacHead:
