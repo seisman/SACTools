@@ -460,11 +460,23 @@ void map_chdr_out ( char *memar, char *buff ) {
 
     return;
 }
+/*******************************************************************************
+    write_sac_head
 
+    IN:
+        const char *name : file name, only for debug
+        SACHEAD     hd   : header to be written
+        FILE       *strm : file handler
+
+    Return:
+        -1  :   failed.
+        0   :   success.
+ 
+*******************************************************************************/
 int write_sac_head(const char *name, SACHEAD hd, FILE *strm) {
     char *buffer;
 
-    if ( fwrite(&hd, SAC_HEADER_NUMBERS, 1, strm) != 1 ) {
+    if ( fwrite(&hd, SAC_HEADER_NUMBERS_SIZE, 1, strm) != 1 ) {
         fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
         return -1;
     }
@@ -473,12 +485,13 @@ int write_sac_head(const char *name, SACHEAD hd, FILE *strm) {
         fprintf(stderr, "Error in allocating memory %s\n", name);
         return -1;
     }
-    map_chdr_out((char *)(&hd)+SAC_HEADER_NUMBERS, (char *)buffer);
+    map_chdr_out((char *)(&hd)+SAC_HEADER_NUMBERS_SIZE, buffer);
 
     if ( fwrite(buffer, SAC_HEADER_STRINGS_SIZE, 1, strm) != 1 ) {
         fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
         return -1;
     }
+    free(buffer);
 
     return 0;
 }
