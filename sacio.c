@@ -387,10 +387,20 @@ void map_chdr_in ( char *memar, char *buff ) {
 /*******************************************************************************
     read_sac_head:
         read sac header in and deal with possible byte swap.
+
+    IN:
+        const char *name : file name, only for debug
+        SACHEAD    *hd   : header to be filled
+        FILE       *strm : file handler
+
+    Return:
+        0   :   Succeed and no byte swap
+        1   :   Succeed and byte swap
+        -1  :   fail.
 *******************************************************************************/
 int read_sac_head (const char *name, SACHEAD *hd, FILE *strm) {
-    int     lswap;
     char*   buffer;
+    int     lswap;
 
     /* read numeric parts of the SAC header */
     if ( fread(hd, SAC_HEADER_NUMBERS_SIZE, 1, strm) != 1 ) {
@@ -403,11 +413,10 @@ int read_sac_head (const char *name, SACHEAD *hd, FILE *strm) {
     if ( lswap == -1 ) {
         fprintf(stderr, "Warning: %s not in sac format.\n", name);
         return -1;
-    } else if ( lswap == TRUE ) {
+    } else if ( lswap == TRUE ) 
         byte_swap( (char *)hd, SAC_HEADER_NUMBERS_SIZE );
-    }
 
-    // read string parts of the SAC header
+    /* read string parts of the SAC header */
     if ( (buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE)) == NULL ){
         fprintf(stderr, "Error in allocating memory %s\n", name);
         return -1;
@@ -416,7 +425,7 @@ int read_sac_head (const char *name, SACHEAD *hd, FILE *strm) {
         fprintf(stderr, "Error in reading SAC header %s\n", name);
         return -1;
     }
-    map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS_SIZE, (char*)buffer);
+    map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS_SIZE, buffer);
     free(buffer);
 
     return lswap;
