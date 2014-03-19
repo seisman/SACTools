@@ -228,7 +228,7 @@ float *ReadSacPwd(const char *name, SACHEAD *hd, int tmark, float t1, float t2) 
     }
 
     nn = (int) ( (t2-t1) / hd->delta );
-    if ( nn<=0 || (ar = (float *)malloc((size_t)(nn*SAC_DATA_SIZEOF))) == NULL) {
+    if ( nn<=0 || (ar = (float *)calloc((size_t)nn, SAC_DATA_SIZEOF)) == NULL) {
         fprintf(stderr, "Errorin allocating memory for reading %s n=%d\n", name, nn);
         return NULL;
     }
