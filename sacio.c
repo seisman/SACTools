@@ -7,6 +7,12 @@
  *      write_sac        Write SAC binary data                                 *
  *      new_sac_head     Create a new minimal SAC header                       *
  *                                                                             *
+ *  Author: Dongdong Tian @ USTC                                               *
+ *                                                                             *
+ *  Revisions:                                                                 *
+ *      2014-03-19  Dongdong Tian   Modified from Prof. Lupei Zhu's code       *
+ *      2014-08-02  Dongdong Tian   Better function naming and coding style    *
+ *                                                                             *
  ******************************************************************************/
 
 #include <stdio.h>
