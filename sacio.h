@@ -4,7 +4,7 @@
     Purpose:  structure for header of a SAC (Seismic Analysis Code)
         data file, and prototype for basic SAC I/O
 
-    Notes:    
+    Notes:
     Key to comment flags describing each field:
         Column 1:
             R       required by SAC
@@ -39,35 +39,36 @@
         07/06/93  Xiaoming Ding   structure name sac -> sac_head
                                   typedef structure to be SACHEAD
         12/06/96  Lupei Zhu       prototype sacio functions
-        05/04/13  Dongdong Tian   modify headers according to SAC101.5
+        05/04/13  Dongdong Tian   modify headers according to SAC v101.5
 *******************************************************************************/
 
 #ifndef _SACIO_H
-# define _SACIO_H
+#define _SACIO_H
 
 /*******************************************************************************
                         SAC header structure
 
     The SAC package is originally implemented in FORTRAN language, and the SAC
-    file format follows the conventions of FORTRAN language. Each character 
-    strings has a length of 8 bytes ( 16 bytes for kevnm ).
+    file format follows the conventions of FORTRAN language. Each character
+    string has a length of 8 bytes (16 bytes for kevnm).
 
-    While reimplementing SAC in C, an extra byte is needed since C use '\0' to 
-    mark the termination of a string to avoid wiping out the contents of the 
+    While reimplementing SAC in C, an extra byte is needed since C use '\0' to
+    mark the termination of a string to avoid wiping out the contents of the
     last character.
 
-    The header structure are needed, one for structure in memory and one for 
+    The header structure are needed, one for structure in memory and one for
     reading/writing header structure from/to disk.
 
-    While reading a file, first read in the numeric part to the header 
-    structure, then read the string part to a temporary buffer, then map 
+    While reading a file, first read in the numeric part to the header
+    structure, then read the string part to a temporary buffer, then map
     strings from buffer to header structure.
 
-    While writing a file, first write the numeric part from header structure 
+    While writing a file, first write the numeric part from header structure
     to disk, then map the strings from header structure to temporary buffer,
     then write the buffer to disk.
- 
+
 *******************************************************************************/
+
 typedef struct sac_head {
     float delta;            /* RF increment between evenly spaced samples     */
     float depmin;           /*    minimum value of dependent variable         */
@@ -209,7 +210,7 @@ typedef struct sac_head {
 
     Definitions of constants for SAC enumerated data values.
 
-    undocumented == couldn't find a definition for it (denio, 07/15/88) 
+    undocumented == couldn't find a definition for it (denio, 07/15/88)
 *******************************************************************************/
 #define ITIME   1       /* file: time series data    */
 #define IRLIM   2       /* file: real&imag spectrum  */
@@ -324,28 +325,23 @@ typedef struct sac_head {
 #define CCS1 "%-8.8s%-8.8s%-8.8s\n"             /* for strings */
 #define CCS2 "%-8.8s%-16.16s\n"                 /* for strings */
 
-/* Number of numeric values in the SAC Header  ( 4 bytes) */
+/* Number of numeric values in the SAC Header  (4 bytes) */
 #define SAC_HEADER_NUMBERS      110     /* 70 + 15 + 20 + 5 */
-/* Number of strings in the SAC Header  ( 8 or 9 bytes ) */
+/* Number of strings in the SAC Header  (8 or 9 bytes) */
 #define SAC_HEADER_STRINGS      24      /* 24 = 23 + 1 */
 
-/* size of a number stored on disk or in memory, 
- * make sure sizeof(float) == sizeof(int) == 4
+/* size of integers or floats on disk or in memory
+ * make sure sizeof(float) == 4 && sizeof(int)==4
  */
-#define SAC_HEADER_SIZEOF_NUMBER    4
-
-/* size of data points on disk or in memory 
- * make sure sizeof(float) == 4
- */ 
 #define SAC_DATA_SIZEOF             4
 
 /* Size of a character string stored on disk for a SAC header */
 #define SAC_HEADER_STRING_LENGTH_FILE   8
 /* Size of a character string stored in memory for a SAC header */
-#define SAC_HEADER_STRING_LENGTH        9 
-/* Size of numeric headers on disk */ 
-#define SAC_HEADER_NUMBERS_SIZE ( SAC_HEADER_NUMBERS * SAC_HEADER_SIZEOF_NUMBER )
-/* Size of string headers on disk */ 
+#define SAC_HEADER_STRING_LENGTH        9
+/* Size of numeric headers on disk */
+#define SAC_HEADER_NUMBERS_SIZE ( SAC_HEADER_NUMBERS * SAC_DATA_SIZEOF )
+/* Size of string headers on disk */
 #define SAC_HEADER_STRINGS_SIZE ( SAC_HEADER_STRINGS * SAC_HEADER_STRING_LENGTH_FILE )
 
 /* SAC Header Version Number */
@@ -360,10 +356,10 @@ typedef struct sac_head {
 #define USERN   40
 
 /* function prototype of basic SAC I/O */
-int      ReadSacHead ( const char *name, SACHEAD *hd );
-float   *ReadSac     ( const char *name, SACHEAD *hd );
-float   *ReadSacPwd  ( const char *name, SACHEAD *hd, int tmark, float t1, float t2 );
-int      WriteSac    ( const char *name, SACHEAD hd, const float *ar );
-SACHEAD  NewSacHead  ( float dt, int ns, float b0);
+int read_sac_head(const char *name, SACHEAD *hd);
+float *read_sac(const char *name, SACHEAD *hd);
+float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2);
+int write_sac(const char *name, SACHEAD hd, const float *ar);
+SACHEAD new_sac_head(float dt, int ns, float b0);
 
 #endif /* sacio.h */
