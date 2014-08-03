@@ -138,6 +138,7 @@ float *read_sac(const char *name, SACHEAD *hd)
 
     if (fread((char*)ar, sz, 1, strm) != 1) {
         fprintf(stderr, "Error in reading SAC data %s\n", name);
+        free(ar);
         fclose(strm);
         return NULL;
     }
@@ -243,6 +244,7 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
         tref = *((float *) hd + TMARK + tmark);
         if (fabs(tref+12345.)<0.1) {
             fprintf(stderr, "Time mark undefined in %s\n", name);
+            free(ar);
             return NULL;
         }
     }
@@ -263,6 +265,7 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
     } else {
         if (fseek(strm, nt1*SAC_DATA_SIZEOF, SEEK_CUR) < 0) {
             fprintf(stderr, "Error in seek %s\n", name);
+            free(ar);
             fclose(strm);
             return NULL;
         }
@@ -273,6 +276,7 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
 
     if (fread((char *)fpt, (size_t)nn * SAC_DATA_SIZEOF, 1, strm) != 1) {
         fprintf(stderr, "Error in reading SAC data %s\n", name);
+        free(ar);
         fclose(strm);
         return NULL;
     }
@@ -448,6 +452,7 @@ static int read_head_in(const char *name, SACHEAD *hd, FILE *strm)
     }
     if (fread(buffer, SAC_HEADER_STRINGS_SIZE, 1, strm) != 1) {
         fprintf(stderr, "Error in reading SAC header %s\n", name);
+        free(buffer);
         return -1;
     }
     map_chdr_in((char *)(hd)+SAC_HEADER_NUMBERS_SIZE, buffer);
