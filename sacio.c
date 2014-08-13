@@ -223,6 +223,8 @@ int write_sac(const char *name, SACHEAD hd, const float *ar)
     }
 
     sz = (size_t)hd.npts * SAC_DATA_SIZEOF;
+    if (hd.iftype == IXY) sz *= 2;
+
     if (fwrite(ar, sz, 1, strm) != 1) {
         fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
         fclose(strm);
@@ -250,32 +252,25 @@ int write_sac(const char *name, SACHEAD hd, const float *ar)
  */
 int write_sac_xy(const char *name, SACHEAD hd, const float *xdata, const float *ydata)
 {
-    FILE    *strm;
-    size_t  sz;
+    float *ar;
+    int npts;
+    int error;
+    size_t sz;
 
-    if ((strm = fopen(name, "wb")) == NULL) {
-        fprintf(stderr, "Error in opening file for writing %s\n", name);
-        return -1;
-    }
+    npts = hd.npts;
+    sz = (size_t)npts * SAC_DATA_SIZEOF;
 
-    if (write_head_out(name, hd, strm) == -1) {
-        fclose(strm);
+    if ((ar = (float *)malloc(sz*2)) == NULL) {
+        fprintf(stderr, "Error in allocating memory for file %s\n", name);
         return -1;
     }
+    memcpy(ar,      xdata, sz);
+    memcpy(ar+npts, ydata, sz);
 
-    sz = (size_t)hd.npts * SAC_DATA_SIZEOF;
-    if (fwrite(xdata, sz, 1, strm) != 1) {
-        fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
-        fclose(strm);
-        return -1;
-    }
-    if (fwrite(ydata, sz, 1, strm) != 1) {
-        fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
-        fclose(strm);
-        return -1;
-    }
-    fclose(strm);
-    return 0;
+    error = write_sac(name, hd, ar);
+
+    free(ar);
+    return error;
 }
 
 /*
