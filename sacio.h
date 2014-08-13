@@ -358,8 +358,10 @@ typedef struct sac_head {
 /* function prototype of basic SAC I/O */
 int read_sac_head(const char *name, SACHEAD *hd);
 float *read_sac(const char *name, SACHEAD *hd);
+int read_sac_xy(const char *name, SACHEAD *hd, float *xdata, float *ydata);
 float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2);
 int write_sac(const char *name, SACHEAD hd, const float *ar);
+int write_sac_xy(const char *name, SACHEAD hd, const float *xdata, const float *ydata);
 SACHEAD new_sac_head(float dt, int ns, float b0);
 
 #endif /* sacio.h */

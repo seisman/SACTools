@@ -3,8 +3,10 @@
  *  SAC I/O functions:                                                         *
  *      read_sac_head    read SAC header                                       *
  *      read_sac         read SAC binary data                                  *
+ *      read_sac_xy      read SAC binary XY data                               *
  *      read_sac_pdw     read SAC data in a partial data window (cut option)   *
  *      write_sac        Write SAC binary data                                 *
+ *      write_sac_xy     Write SAC binary XY data                              *
  *      new_sac_head     Create a new minimal SAC header                       *
  *                                                                             *
  *  Author: Dongdong Tian @ USTC                                               *
@@ -130,6 +132,8 @@ float *read_sac(const char *name, SACHEAD *hd)
     }
 
     sz = (size_t) hd->npts * SAC_DATA_SIZEOF;
+    if (hd->iftype == IXY) sz *= 2;
+
     if ((ar = (float *)malloc(sz)) == NULL) {
         fprintf(stderr, "Error in allocating memory for reading %s\n", name);
         fclose(strm);
@@ -147,6 +151,45 @@ float *read_sac(const char *name, SACHEAD *hd)
     if (lswap == TRUE) byte_swap((char*)ar, sz);
 
     return ar;
+}
+
+/*
+ *  read_sac_xy
+ *
+ *  Description:    read SAC XY binary file
+ *
+ *  IN:
+ *      const char *name    :   file name
+ *  OUT:
+ *      SACHEAD *hd         :   SAC head to be filled
+ *      float *xdata        :   pointer for X
+ *      float *ydata        :   pointer for Y
+ *
+ *  Return: 0 for success, -1 for fail
+ *
+ */
+int read_sac_xy(const char *name, SACHEAD *hd, float *xdata, float *ydata)
+{
+    float *data;
+    size_t npts;
+
+    if ((data = read_sac(name, hd)) == NULL)  return -1;
+
+    npts = (size_t)hd->npts;
+    if ((xdata = (float *)malloc(npts*SAC_DATA_SIZEOF)) == NULL) {
+        fprintf(stderr, "Error in allocating memory for %s\n", name);
+        return -1;
+    }
+    if ((ydata = (float *)malloc(npts*SAC_DATA_SIZEOF)) == NULL) {
+        fprintf(stderr, "Error in allocating memory for %s\n", name);
+        return -1;
+    }
+
+    memcpy(xdata, data     , npts*SAC_DATA_SIZEOF);
+    memcpy(ydata, data+npts, npts*SAC_DATA_SIZEOF);
+
+    free(data);
+    return 0;
 }
 
 /*
@@ -181,6 +224,52 @@ int write_sac(const char *name, SACHEAD hd, const float *ar)
 
     sz = (size_t)hd.npts * SAC_DATA_SIZEOF;
     if (fwrite(ar, sz, 1, strm) != 1) {
+        fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
+        fclose(strm);
+        return -1;
+    }
+    fclose(strm);
+    return 0;
+}
+
+/*
+ *  write_sac_xy
+ *
+ *  Description:    write binary SAC XY data
+ *
+ *  IN:
+ *      const char *name    :   file name
+ *      SACHEAD     hd      :   header
+ *      const float *xdata  :   float data array for X
+ *      const float *ydata  :   float data array for Y
+ *
+ *  Return:
+ *      -1  :   fail
+ *      0   :   succeed
+ *
+ */
+int write_sac_xy(const char *name, SACHEAD hd, const float *xdata, const float *ydata)
+{
+    FILE    *strm;
+    size_t  sz;
+
+    if ((strm = fopen(name, "wb")) == NULL) {
+        fprintf(stderr, "Error in opening file for writing %s\n", name);
+        return -1;
+    }
+
+    if (write_head_out(name, hd, strm) == -1) {
+        fclose(strm);
+        return -1;
+    }
+
+    sz = (size_t)hd.npts * SAC_DATA_SIZEOF;
+    if (fwrite(xdata, sz, 1, strm) != 1) {
+        fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
+        fclose(strm);
+        return -1;
+    }
+    if (fwrite(ydata, sz, 1, strm) != 1) {
         fprintf(stderr, "Error in writing SAC data for writing %s\n", name);
         fclose(strm);
         return -1;
