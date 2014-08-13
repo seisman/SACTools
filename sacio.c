@@ -267,6 +267,10 @@ int write_sac_xy(const char *name, SACHEAD hd, const float *xdata, const float *
     memcpy(ar,      xdata, sz);
     memcpy(ar+npts, ydata, sz);
 
+    /* needed for XY data */
+    hd.iftype = IXY;
+    hd.leven = FALSE;
+
     error = write_sac(name, hd, ar);
 
     free(ar);
