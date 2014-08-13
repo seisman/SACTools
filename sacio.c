@@ -149,7 +149,6 @@ float *read_sac(const char *name, SACHEAD *hd)
     return ar;
 }
 
-
 /*
  *  write_sac
  *
@@ -236,6 +235,7 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
     nn = (int)((t2-t1)/hd->delta);
     if (nn<=0 || (ar = (float *)calloc((size_t)nn, SAC_DATA_SIZEOF)) == NULL) {
         fprintf(stderr, "Errorin allocating memory for reading %s n=%d\n", name, nn);
+        fclose(strm);
         return NULL;
     }
 
@@ -245,6 +245,7 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
         if (fabs(tref+12345.)<0.1) {
             fprintf(stderr, "Time mark undefined in %s\n", name);
             free(ar);
+            fclose(strm);
             return NULL;
         }
     }
@@ -324,7 +325,7 @@ SACHEAD new_sac_head(float dt, int ns, float b0)
  *
  *  IN:
  *      char    *pt : pointer to byte array
- *      size_t   m  : number of bytes
+ *      size_t   n  : number of bytes
  *  Return: none
  *
  *  Notes:
@@ -367,10 +368,10 @@ static int check_sac_nvhdr(const int nvhdr)
 
     if (nvhdr != SAC_HEADER_MAJOR_VERSION) {
         byte_swap((char*) &nvhdr, SAC_DATA_SIZEOF);
-        if (nvhdr != SAC_HEADER_MAJOR_VERSION)
-            lswap = -1;
-        else
+        if (nvhdr == SAC_HEADER_MAJOR_VERSION)
             lswap = TRUE;
+        else
+            lswap = -1;
     }
     return lswap;
 }
@@ -418,7 +419,7 @@ static void map_chdr_in(char *memar, char *buff)
  *  Return:
  *      0   :   Succeed and no byte swap
  *      1   :   Succeed and byte swap
- *      -1  :   fail.
+ *     -1   :   fail.
  */
 static int read_head_in(const char *name, SACHEAD *hd, FILE *strm)
 {
@@ -426,7 +427,7 @@ static int read_head_in(const char *name, SACHEAD *hd, FILE *strm)
     int     lswap;
 
     if (sizeof(float) != SAC_DATA_SIZEOF || sizeof(int) != SAC_DATA_SIZEOF) {
-        fprintf(stderr, "Mismatch in size of basic data type");
+        fprintf(stderr, "Mismatch in size of basic data type!\n");
         return -1;
     }
 
@@ -441,12 +442,12 @@ static int read_head_in(const char *name, SACHEAD *hd, FILE *strm)
     if (lswap == -1) {
         fprintf(stderr, "Warning: %s not in sac format.\n", name);
         return -1;
-    } else if (lswap == TRUE){
+    } else if (lswap == TRUE) {
         byte_swap((char *)hd, SAC_HEADER_NUMBERS_SIZE);
     }
 
     /* read string parts of the SAC header */
-    if ((buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE)) == NULL){
+    if ((buffer = (char *)malloc(SAC_HEADER_STRINGS_SIZE)) == NULL) {
         fprintf(stderr, "Error in allocating memory %s\n", name);
         return -1;
     }
@@ -499,14 +500,14 @@ static void map_chdr_out(char *memar, char *buff)
  *
  *  Return:
  *      -1  :   failed.
- *      0   :   success.
+ *       0  :   success.
  */
 static int write_head_out(const char *name, SACHEAD hd, FILE *strm)
 {
     char *buffer;
 
     if (sizeof(float) != SAC_DATA_SIZEOF || sizeof(int) != SAC_DATA_SIZEOF) {
-        fprintf(stderr, "Mismatch in size of basic data type");
+        fprintf(stderr, "Mismatch in size of basic data type!\n");
         return -1;
     }
 
