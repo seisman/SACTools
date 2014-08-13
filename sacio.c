@@ -8,12 +8,17 @@
  *      write_sac        Write SAC binary data                                 *
  *      write_sac_xy     Write SAC binary XY data                              *
  *      new_sac_head     Create a new minimal SAC header                       *
+ *      sac_head_index   Find index of SAC head field                          *
  *                                                                             *
  *  Author: Dongdong Tian @ USTC                                               *
  *                                                                             *
  *  Revisions:                                                                 *
  *      2014-03-19  Dongdong Tian   Modified from Prof. Lupei Zhu's code       *
  *      2014-08-02  Dongdong Tian   Better function naming and coding style    *
+ *      2014-08-13  Dongdong Tian   Add new funtions:                          *
+ *                                  - read_sac_xy                              *
+ *                                  - write_sac_xy                             *
+ *                                  - sac_head_index                           *
  *                                                                             *
  ******************************************************************************/
 
@@ -21,6 +26,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <ctype.h>
 #include "sacio.h"
 
 /* function prototype for local use */
@@ -379,7 +385,6 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
 /*
  *  new_sac_head
  *
- *
  *  Description: create a new SAC header with required fields
  *
  *  IN:
@@ -400,6 +405,65 @@ SACHEAD new_sac_head(float dt, int ns, float b0)
     hd.leven    =   TRUE;
     hd.nvhdr    =   SAC_HEADER_MAJOR_VERSION;
     return hd;
+}
+
+
+/*
+ *  sac_head_index
+ *
+ *  Description: Find the index of sac head field name
+ *
+ *  In:
+ *      const char *name    :   name of sac head field
+ *  Return:
+ *      index of sac head field
+ *
+ */
+int sac_head_index(const char *name)
+{
+    const char fields[SAC_HEADER_NUMBERS+SAC_HEADER_STRINGS][10] = {
+        "delta",    "depmin",   "depmax",   "scale",    "odelta",
+        "b",        "e",        "o",        "a",        "internal1",
+        "t0",       "t1",       "t2",       "t3",       "t4",
+        "t5",       "t6",       "t7",       "t8",       "t9",
+        "f",        "resp0",    "resp1",    "resp2",    "resp3",
+        "resp4",    "resp5",    "resp6",    "resp7",    "resp8",
+        "resp9",    "stla",     "stlo",     "stel",     "stdp",
+        "evla",     "evlo",     "evel",     "evdp",     "mag",
+        "user",     "user1",    "user2",    "user3",    "user4",
+        "user5",    "user6"     "user7",    "user8",    "user9",
+        "dist",     "az",       "baz",      "gcarc",    "internal2",
+        "internal3","depmen",   "cmpaz",    "cmpinc",   "xminimum",
+        "xmaximum", "yminimum", "ymaximum", "unused1",  "unused2",
+        "unused3",  "unused4",  "unused5",  "unused6",  "unused7",
+        "nzyear",   "nzjday",   "nzhour",   "nzmin",    "nzsec",
+        "nzmsec",   "nvhdr",    "norid",    "nevid",    "npts",
+        "internal4","nwfid",    "nxsize",   "nysize",   "unused8",
+        "iftype",   "idep",     "iztype",   "unused9",  "iinst",
+        "istreg",   "ievreg",   "ievtyp",   "iqual",    "isynth",
+        "imagtyp",  "imagsrc",  "unused10", "unused11", "unused12",
+        "unused13", "unused14", "unused15", "unused16", "unused17",
+        "leven",    "lpspol",   "lovrok",   "lcalda",   "unused18",
+        "kstnm",    "kevnm",
+        "khole",    "ko",       "ka",
+        "kt0",      "kt1",      "kt2",
+        "kt3",      "kt4",      "kt5",
+        "kt6",      "kt7",      "kt8",
+        "kt9",      "kf",       "kuser0",
+        "kuser1",   "kuser2",   "kcmpnm",
+        "knetwk",   "kdatrd",   "kinst",
+    };
+    char key[10];
+    int i;
+
+    /* convert name to lower case */
+    for (i=0; name[i]; i++)
+        key[i] = tolower(name[i]);
+
+    for (i=0; i<SAC_HEADER_NUMBERS_SIZE+SAC_HEADER_STRINGS_SIZE; i++)
+        if ((strcmp(key, fields[i])==0)) return i;
+
+    return -1;
 }
 
 /******************************************************************************

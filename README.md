@@ -12,5 +12,6 @@ This is a collection of C codes relating with SAC files.
   - write_sac: write SAC binary data
   - write_sac_xy: write SAC binary XY data
   - new_sac_head: create a minimal SAC header
+  - sac_head_index: find index of SAC head field
 
 - sac2col: Convert a SAC file to a one/two column table
