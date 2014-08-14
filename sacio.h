@@ -363,6 +363,6 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
 int write_sac(const char *name, SACHEAD hd, const float *ar);
 int write_sac_xy(const char *name, SACHEAD hd, const float *xdata, const float *ydata);
 SACHEAD new_sac_head(float dt, int ns, float b0);
-int sac_head_index(const char *name);
+int sac_head_offset(const char *name);
 
 #endif /* sacio.h */

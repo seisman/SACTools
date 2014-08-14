@@ -8,7 +8,7 @@
  *      write_sac        Write SAC binary data                                 *
  *      write_sac_xy     Write SAC binary XY data                              *
  *      new_sac_head     Create a new minimal SAC header                       *
- *      sac_head_index   Find index of SAC head field                          *
+ *      sac_head_offset  Find the offset of specified SAC head fields          *
  *                                                                             *
  *  Author: Dongdong Tian @ USTC                                               *
  *                                                                             *
@@ -18,7 +18,7 @@
  *      2014-08-13  Dongdong Tian   Add new funtions:                          *
  *                                  - read_sac_xy                              *
  *                                  - write_sac_xy                             *
- *                                  - sac_head_index                           *
+ *                                  - sac_head_offset                          *
  *                                                                             *
  ******************************************************************************/
 
@@ -407,19 +407,18 @@ SACHEAD new_sac_head(float dt, int ns, float b0)
     return hd;
 }
 
-
 /*
- *  sac_head_index
+ *  sac_head_offset
  *
- *  Description: Find the index of sac head field name
+ *  Description: Find the offset of a specified sac head field
  *
  *  In:
  *      const char *name    :   name of sac head field
  *  Return:
- *      index of sac head field
+ *      offset in bytes relative to the address of structure SACHEAD
  *
  */
-int sac_head_index(const char *name)
+int sac_head_offset(const char *name)
 {
     const char fields[SAC_HEADER_NUMBERS+SAC_HEADER_STRINGS][10] = {
         "delta",    "depmin",   "depmax",   "scale",    "odelta",
@@ -430,7 +429,7 @@ int sac_head_index(const char *name)
         "resp4",    "resp5",    "resp6",    "resp7",    "resp8",
         "resp9",    "stla",     "stlo",     "stel",     "stdp",
         "evla",     "evlo",     "evel",     "evdp",     "mag",
-        "user",     "user1",    "user2",    "user3",    "user4",
+        "user0",    "user1",    "user2",    "user3",    "user4",
         "user5",    "user6",    "user7",    "user8",    "user9",
         "dist",     "az",       "baz",      "gcarc",    "internal2",
         "internal3","depmen",   "cmpaz",    "cmpinc",   "xminimum",
@@ -444,7 +443,7 @@ int sac_head_index(const char *name)
         "imagtyp",  "imagsrc",  "unused10", "unused11", "unused12",
         "unused13", "unused14", "unused15", "unused16", "unused17",
         "leven",    "lpspol",   "lovrok",   "lcalda",   "unused18",
-        "kstnm",    "kevnm",
+        "kstnm",    "kevnm",    "kevnmmore",
         "khole",    "ko",       "ka",
         "kt0",      "kt1",      "kt2",
         "kt3",      "kt4",      "kt5",
@@ -459,9 +458,19 @@ int sac_head_index(const char *name)
     /* convert name to lower case */
     for (i=0; name[i]; i++)
         key[i] = tolower(name[i]);
+    key[i] = '\0';
 
-    for (i=0; i<SAC_HEADER_NUMBERS_SIZE+SAC_HEADER_STRINGS_SIZE; i++)
-        if ((strcmp(key, fields[i])==0)) return i;
+    switch (key[0]) {
+        case 'k':   /* string */
+            for (i=SAC_HEADER_NUMBERS; i<SAC_HEADER_NUMBERS+SAC_HEADER_STRINGS; i++) {
+                if ((strcmp(key, fields[i]) == 0))
+                    return (i - SAC_HEADER_NUMBERS) * SAC_HEADER_STRING_LENGTH
+                            + SAC_HEADER_NUMBERS_SIZE;
+            }
+        default:    /* float and integer */
+            for (i=0; i<SAC_HEADER_NUMBERS; i++)
+                if ((strcmp(key, fields[i]) == 0))  return i*SAC_DATA_SIZEOF;
+    }
 
     return -1;
 }
