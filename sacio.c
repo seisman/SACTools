@@ -431,7 +431,7 @@ int sac_head_index(const char *name)
         "resp9",    "stla",     "stlo",     "stel",     "stdp",
         "evla",     "evlo",     "evel",     "evdp",     "mag",
         "user",     "user1",    "user2",    "user3",    "user4",
-        "user5",    "user6"     "user7",    "user8",    "user9",
+        "user5",    "user6",    "user7",    "user8",    "user9",
         "dist",     "az",       "baz",      "gcarc",    "internal2",
         "internal3","depmen",   "cmpaz",    "cmpinc",   "xminimum",
         "xmaximum", "yminimum", "ymaximum", "unused1",  "unused2",
