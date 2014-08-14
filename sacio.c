@@ -452,24 +452,19 @@ int sac_head_offset(const char *name)
         "kuser1",   "kuser2",   "kcmpnm",
         "knetwk",   "kdatrd",   "kinst",
     };
-    char key[10];
     int i;
 
-    /* convert name to lower case */
-    for (i=0; name[i]; i++)
-        key[i] = tolower(name[i]);
-    key[i] = '\0';
-
-    switch (key[0]) {
-        case 'k':   /* string */
+    switch (name[0]) {
+        case 'K':   /* string */
+        case 'k':
             for (i=SAC_HEADER_NUMBERS; i<SAC_HEADER_NUMBERS+SAC_HEADER_STRINGS; i++) {
-                if ((strcmp(key, fields[i]) == 0))
+                if ((strcasecmp(name, fields[i]) == 0))
                     return (i - SAC_HEADER_NUMBERS) * SAC_HEADER_STRING_LENGTH
                             + SAC_HEADER_NUMBERS_SIZE;
             }
         default:    /* float and integer */
             for (i=0; i<SAC_HEADER_NUMBERS; i++)
-                if ((strcmp(key, fields[i]) == 0))  return i*SAC_DATA_SIZEOF;
+                if ((strcasecmp(name, fields[i]) == 0))  return i*SAC_DATA_SIZEOF;
     }
 
     return -1;
