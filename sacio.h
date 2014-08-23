@@ -325,8 +325,12 @@ typedef struct sac_head {
 #define CCS1 "%-8.8s%-8.8s%-8.8s\n"             /* for strings */
 #define CCS2 "%-8.8s%-16.16s\n"                 /* for strings */
 
+/* Number of floats in the SAC Header */
+#define SAC_HEADER_FLOATS       70
+/* Number of ints in the SAC Header */
+#define SAC_HEADER_INTS         40      /* 15 + 20 + 5 */
 /* Number of numeric values in the SAC Header  (4 bytes) */
-#define SAC_HEADER_NUMBERS      110     /* 70 + 15 + 20 + 5 */
+#define SAC_HEADER_NUMBERS      ( SAC_HEADER_FLOATS + SAC_HEADER_INTS )
 /* Number of strings in the SAC Header  (8 or 9 bytes) */
 #define SAC_HEADER_STRINGS      24      /* 24 = 23 + 1 */
 
@@ -334,13 +338,17 @@ typedef struct sac_head {
  * make sure sizeof(float) == 4 && sizeof(int)==4
  */
 #define SAC_DATA_SIZEOF             4
-
 /* Size of a character string stored on disk for a SAC header */
 #define SAC_HEADER_STRING_LENGTH_FILE   8
 /* Size of a character string stored in memory for a SAC header */
 #define SAC_HEADER_STRING_LENGTH        9
+
+/* Size of floats in the SAC Header */
+#define SAC_HEADER_FLOATS_SIZE  ( SAC_HEADER_FLOATS * SAC_DATA_SIZEOF )
+/* Size of ints in the SAC Header */
+#define SAC_HEADER_INTS_SIZE  ( SAC_HEADER_INTS * SAC_DATA_SIZEOF )
 /* Size of numeric headers on disk */
-#define SAC_HEADER_NUMBERS_SIZE ( SAC_HEADER_NUMBERS * SAC_DATA_SIZEOF )
+#define SAC_HEADER_NUMBERS_SIZE ( SAC_HEADER_FLOATS_SIZE + SAC_HEADER_INTS_SIZE )
 /* Size of string headers on disk */
 #define SAC_HEADER_STRINGS_SIZE ( SAC_HEADER_STRINGS * SAC_HEADER_STRING_LENGTH_FILE )
 
@@ -363,6 +371,6 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
 int write_sac(const char *name, SACHEAD hd, const float *ar);
 int write_sac_xy(const char *name, SACHEAD hd, const float *xdata, const float *ydata);
 SACHEAD new_sac_head(float dt, int ns, float b0);
-int sac_head_offset(const char *name);
+int sac_head_index(const char *name);
 
 #endif /* sacio.h */

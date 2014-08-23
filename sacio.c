@@ -18,7 +18,7 @@
  *      2014-08-13  Dongdong Tian   Add new funtions:                          *
  *                                  - read_sac_xy                              *
  *                                  - write_sac_xy                             *
- *                                  - sac_head_offset                          *
+ *                                  - sac_head_index                           *
  *                                                                             *
  ******************************************************************************/
 
@@ -408,17 +408,17 @@ SACHEAD new_sac_head(float dt, int ns, float b0)
 }
 
 /*
- *  sac_head_offset
+ *  sac_head_index
  *
- *  Description: Find the offset of a specified sac head field
+ *  Description: return the index of a specified sac head field
  *
  *  In:
  *      const char *name    :   name of sac head field
  *  Return:
- *      offset in bytes relative to the address of structure SACHEAD
+ *      index of a specified field in sac head
  *
  */
-int sac_head_offset(const char *name)
+int sac_head_index(const char *name)
 {
     const char fields[SAC_HEADER_NUMBERS+SAC_HEADER_STRINGS][10] = {
         "delta",    "depmin",   "depmax",   "scale",    "odelta",
@@ -454,18 +454,8 @@ int sac_head_offset(const char *name)
     };
     int i;
 
-    switch (name[0]) {
-        case 'K':   /* string */
-        case 'k':
-            for (i=SAC_HEADER_NUMBERS; i<SAC_HEADER_NUMBERS+SAC_HEADER_STRINGS; i++) {
-                if ((strcasecmp(name, fields[i]) == 0))
-                    return (i - SAC_HEADER_NUMBERS) * SAC_HEADER_STRING_LENGTH
-                            + SAC_HEADER_NUMBERS_SIZE;
-            }
-        default:    /* float and integer */
-            for (i=0; i<SAC_HEADER_NUMBERS; i++)
-                if ((strcasecmp(name, fields[i]) == 0))  return i*SAC_DATA_SIZEOF;
-    }
+    for (i=0; i<SAC_HEADER_NUMBERS+SAC_HEADER_STRINGS; i++)
+        if ((strcasecmp(name, fields[i]) == 0))  return i;
 
     return -1;
 }
