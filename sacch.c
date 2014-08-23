@@ -60,6 +60,10 @@ int main(int argc, char *argv[])
     int ikey = 0;
     int ckey = 0;
     int file = 0;
+    float *data;
+    char sacfile[80];
+    SACHEAD hd;
+
 
     int cal2jul(int year, int month, int day);
 
@@ -106,10 +110,6 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    float *data;
-    char sacfile[80];
-    SACHEAD hd;
-
     for (i=1; i<argc; i++) {
         /* skip key=value pairs */
         if ((strchr(argv[i], '=')) != NULL) continue;
@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
             hd.nzmsec = msec;
         }
         write_sac(sacfile, hd, data);
+        free(data);
     }
     return 0;
 }
