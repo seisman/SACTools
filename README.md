@@ -15,3 +15,4 @@ This is a collection of C codes relating with SAC files.
   - sac_head_offset: find offset of a SAC head field
 
 - sac2col: Convert a SAC file to a one/two column table
+- sacch: Change the values of selected head fields
