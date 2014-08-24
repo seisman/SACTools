@@ -319,6 +319,11 @@ typedef struct sac_head {
 #undef TRUE
 #define TRUE    1
 
+#define SAC_FLOAT_UNDEF (-12345.0)
+#define SAC_INT_UNDEF   (-12345)
+#define SAC_CHAR8_UNDEF "-12345  "
+#define SAC_CHAR16_UNDEF "-12345          "
+
 /* Format strings for writing headers for SAC ASCII files */
 #define FCS "%15.7f%15.7f%15.7f%15.7f%15.7f\n"  /* for floats */
 #define ICS "%10d%10d%10d%10d%10d\n"            /* for integers */
