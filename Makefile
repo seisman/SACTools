@@ -8,7 +8,7 @@ all: sac2col sacch
 sac2col: sac2col.o sacio.o
 	$(CC) -o $(BIN)/$@ $^
 
-sacch: sacch.o sacio.o
+sacch: sacch.o sacio.o datetime.o
 	$(CC) -o $(BIN)/$@ $^ -lm
 
 clean:

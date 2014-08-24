@@ -11,23 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include <time.h>
 #include "sacio.h"
-
-typedef struct datetime {
-    int year;
-    int month;
-    int day;
-    int jday;
-    int hour;
-    int min;
-    int sec;
-    int msec;
-} DATETIME;
+#include "datetime.h"
 
 void usage(void);
-void datetime_init(DATETIME *dt);
+void datetime_undef(DATETIME *dt);
 DATETIME datetime_read(char *string);
+DATETIME datetime_set_ref(SACHEAD hd);
 
 void usage() {
     fprintf(stderr, "Change the value of selected head fields       \n");
@@ -52,7 +42,8 @@ int main(int argc, char *argv[])
 {
     struct {
         int index;
-        float value;
+        int tmark;      // flag for value in DATETIME format or not
+        double value;
     } Fkeyval[MAX_HEAD];
 
     struct {
@@ -79,58 +70,66 @@ int main(int argc, char *argv[])
     char sacfile[80];
     SACHEAD hd;
 
-
-
-    int cal2jul(int year, int month, int day);
-
     char args[80];
     for (i=1; i<argc; i++) {
         strcpy(args, argv[i]);
-        if ((p = strchr(args, '=')) != NULL) {   /* key=value pairs */
-            *p = ' ';
-            sscanf(args, "%s %s", key, val);
-            if (strcasecmp(key, "time") == 0) {
-                time = 1;
-                if (strcasecmp(val, "undef") == 0)
-                    datetime_init(&dt);
-                else
-                    dt = datetime_read(val);
-            } else {
-                int index = sac_head_index(key);
-                if (index < 0) {
-                    fprintf(stderr, "Error in sac head name: %s\n", key);
-                    exit(-1);
-                } else if (index >=0 && index < SAC_HEADER_FLOATS) {
-                    Fkeyval[fkey].index = index;
-                    if (strcasecmp(val, "undef") == 0)
-                        Fkeyval[fkey].value = SAC_FLOAT_UNDEF;
-                    else
-                        Fkeyval[fkey].value = atof(val);
-                    fkey++;
-                } else if (index < SAC_HEADER_NUMBERS) {
-                    /* index relative to the start of int fields */
-                    Ikeyval[ikey].index = index - SAC_HEADER_FLOATS;
-                    if (strcasecmp(val, "undef") == 0)
-                        Ikeyval[ikey].value = SAC_INT_UNDEF;
-                    else
-                        Ikeyval[ikey].value = atoi(val);
-                    ikey++;
-                } else {
-                    /* offset in bytes relative to the start of */
-                    Ckeyval[ckey].offset =
-                        (index - SAC_HEADER_NUMBERS) * SAC_HEADER_STRING_LENGTH;
-                    if (strcasecmp(val, "undef") == 0) {  /* undefined chars */
-                        if (strcasecmp(key, "kevnm") == 0)
-                            strcpy(val, SAC_CHAR16_UNDEF);
-                        else
-                            strcpy(val, SAC_CHAR8_UNDEF);
-                    }
-                    strcpy(Ckeyval[ckey].value, val);
-                    ckey++;
-                }
-            }
-        } else
+
+        if ((p = strchr(args, '=')) == NULL) {
+            /* no equal in argument, assume it is a SAC file */
             file++;
+            continue;
+        }
+
+        /* KEY=VALUE pairs */
+        *p = ' ';  sscanf(args, "%s %s", key, val);
+        if (strcasecmp(key, "time") == 0) {     /* TIME */
+            time = 1;
+            if (strcasecmp(val, "undef") == 0)
+                datetime_undef(&dt);
+            else
+                dt = datetime_read(val);
+        } else {                                /* HEAD */
+            int index = sac_head_index(key);
+            if (index < 0) {
+                fprintf(stderr, "Error in sac head name: %s\n", key);
+                exit(-1);
+            } else if (index >=0 && index < SAC_HEADER_FLOATS) {
+                Fkeyval[fkey].index = index;
+                Fkeyval[fkey].tmark = 0;
+                if (strcasecmp(val, "undef") == 0) {
+                    Fkeyval[fkey].value = SAC_FLOAT_UNDEF;
+                } else if ((strchr(val, 'T')) != NULL) {
+                    /* support datetime for time variables */
+                    DATETIME tvalue;
+                    tvalue = datetime_read(val);
+                    Fkeyval[fkey].value = tvalue.epoch;
+                    Fkeyval[fkey].tmark = 1;
+                } else {
+                    Fkeyval[fkey].value = atof(val);
+                }
+                fkey++;
+            } else if (index < SAC_HEADER_NUMBERS) {
+                /* index relative to the start of int fields */
+                Ikeyval[ikey].index = index - SAC_HEADER_FLOATS;
+                if (strcasecmp(val, "undef") == 0)
+                    Ikeyval[ikey].value = SAC_INT_UNDEF;
+                else
+                    Ikeyval[ikey].value = atoi(val);
+                ikey++;
+            } else {
+                /* offset in bytes relative to the start of */
+                Ckeyval[ckey].offset =
+                    (index - SAC_HEADER_NUMBERS) * SAC_HEADER_STRING_LENGTH;
+                if (strcasecmp(val, "undef") == 0) {  /* undefined chars */
+                    if (strcasecmp(key, "kevnm") == 0)
+                        strcpy(val, SAC_CHAR16_UNDEF);
+                    else
+                        strcpy(val, SAC_CHAR8_UNDEF);
+                }
+                strcpy(Ckeyval[ckey].value, val);
+                ckey++;
+            }
+        }
     }
 
     if (!(time || ikey || fkey || ckey) || !file) {
@@ -139,15 +138,23 @@ int main(int argc, char *argv[])
     }
 
     for (i=1; i<argc; i++) {
+        DATETIME tref;
+
         /* skip key=value pairs */
         if ((strchr(argv[i], '=')) != NULL) continue;
 
         strcpy(sacfile, argv[i]);
         if ((data= read_sac(sacfile, &hd)) == NULL) continue;
 
+        tref = datetime_set_ref(hd);
+
         for (j=0; j<fkey; j++) {
             float *pt = &hd.delta;
-            *(pt + Fkeyval[j].index) = Fkeyval[j].value;
+            if (Fkeyval[j].tmark==0) {
+                *(pt + Fkeyval[j].index) = Fkeyval[j].value;
+            } else if (Fkeyval[j].tmark==1) {
+                *(pt + Fkeyval[j].index) = (float)(Fkeyval[j].value - tref.epoch);
+            }
         }
         for (j=0; j<ikey; j++) {
             int *pt = &hd.nzyear;
@@ -159,10 +166,10 @@ int main(int argc, char *argv[])
         }
         if (time) {
             hd.nzyear = dt.year;
-            hd.nzjday = dt.jday;
+            hd.nzjday = dt.doy;
             hd.nzhour = dt.hour;
-            hd.nzmin  = dt.min;
-            hd.nzsec  = dt.sec;
+            hd.nzmin  = dt.minute;
+            hd.nzsec  = dt.second;
             hd.nzmsec = dt.msec;
         }
         write_sac(sacfile, hd, data);
@@ -171,47 +178,42 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/* convert month and day to jday */
-int cal2jul(int year, int month, int day)
-{
-    int noleap[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
-    int   leap[12] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
-
-    if ((year%4==0 && year%100!=0) || (year%400==0))
-        return leap[month-1] + day;
-    else
-        return noleap[month-1] + day;
-}
-
 DATETIME datetime_read(char *string)
 {
     int num;
     float secs;
-    DATETIME dt;
+    int year, month, day, hour, minute, second, msec;
 
     num = sscanf(string, "%d-%d-%dT%d:%d:%f",
-                 &dt.year, &dt.month, &dt.day, &dt.hour, &dt.min, &secs);
+                 &year, &month, &day, &hour, &minute, &secs);
 
     if (num != 6) {
         fprintf(stderr, "Error in time format\n");
         exit(-1);
     }
-    dt.sec  = floor(secs);
-    dt.msec = (int)((secs - (float)dt.sec) * 1000 + 0.5);
+    second  = floor(secs);
+    msec = (int)((secs - (float)second) * 1000 + 0.5);
 
-    dt.jday = cal2jul(dt.year, dt.month, dt.day);
-
-    return dt;
+    return datetime_new(year, month, day, hour, minute, second, msec);
 }
 
-void datetime_init(DATETIME *dt)
+void datetime_undef(DATETIME *dt)
 {
     dt->year = SAC_INT_UNDEF;
     dt->month = SAC_INT_UNDEF;
     dt->day = SAC_INT_UNDEF;
-    dt->jday = SAC_INT_UNDEF;
+    dt->doy = SAC_INT_UNDEF;
     dt->hour = SAC_INT_UNDEF;
-    dt->min = SAC_INT_UNDEF;
-    dt->sec = SAC_INT_UNDEF;
+    dt->minute = SAC_INT_UNDEF;
+    dt->second = SAC_INT_UNDEF;
     dt->msec = SAC_INT_UNDEF;
+}
+
+DATETIME datetime_set_ref(SACHEAD hd)
+{
+    int month, day;
+    doy2ymd(hd.nzyear, hd.nzjday, &month, &day);
+
+    return datetime_new(hd.nzyear, month, day,
+                        hd.nzhour, hd.nzmin, hd.nzsec, hd.nzmsec);
 }
