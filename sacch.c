@@ -24,16 +24,20 @@ void usage() {
     fprintf(stderr, "                                               \n");
     fprintf(stderr, "Usgae:                                         \n");
     fprintf(stderr, "   sacch key1=value1 key2=value2 ... sacfiles  \n");
-    fprintf(stderr, "   sacch time=year-month-dayThour:min:sec.msec sacfiles\n");
+    fprintf(stderr, "   sacch time=DATETIME sacfiles                \n");
     fprintf(stderr, "                                               \n");
     fprintf(stderr, "Notes:                                         \n");
     fprintf(stderr, "   1. keys are sac head fields, like npts, evla\n");
     fprintf(stderr, "   2. values are integers, floats or strings   \n");
     fprintf(stderr, "   3. key=undef to set key to undefinded value.\n");
+    fprintf(stderr, "   4. DATETIME format: yyyy-mm-ddThh:mm:ss.mmm \n");
+    fprintf(stderr, "   5. variables for time offset can use value  \n");
+    fprintf(stderr, "      in DATETIME format                       \n");
     fprintf(stderr, "                                               \n");
     fprintf(stderr, "Examples:                                      \n");
     fprintf(stderr, "   sacch stla=10.2 stlo=20.2 kstnm=COLA seis1 seis2 \n");
-    fprintf(stderr, "   sacch time=2010-02-03T10:20:35.200  seis1 seis2  \n");
+    fprintf(stderr, "   sacch time=2010-02-03T10:20:35.200 seis1 seis2   \n");
+    fprintf(stderr, "   sacch t7=2010-02-03T10:20:30.000 seis1           \n");
     fprintf(stderr, "   sacch t9=undef kt9=undef seis*                   \n");
 }
 
