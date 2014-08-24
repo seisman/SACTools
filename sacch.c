@@ -25,10 +25,12 @@ void usage() {
     fprintf(stderr, "Notes:                                         \n");
     fprintf(stderr, "   1. keys are sac head fields, like npts, evla\n");
     fprintf(stderr, "   2. values are integers, floats or strings   \n");
+    fprintf(stderr, "   3. key=undef to set key to undefinded value.\n");
     fprintf(stderr, "                                               \n");
     fprintf(stderr, "Examples:                                      \n");
     fprintf(stderr, "   sacch stla=10.2 stlo=20.2 kstnm=COLA seis1 seis2 \n");
     fprintf(stderr, "   sacch time=2010-02-03T10:20:35.200  seis1 seis2  \n");
+    fprintf(stderr, "   sacch t9=undef kt9=undef seis*                   \n");
 }
 
 #define MAX_HEAD 20
@@ -75,10 +77,24 @@ int main(int argc, char *argv[])
             sscanf(args, "%s %s", key, val);
             if (strcasecmp(key, "time") == 0) {
                 time = 1;
-                sscanf(val, "%d-%d-%dT%d:%d:%f",
-                        &year, &month, &day, &hour, &min, &secs);
-                sec  = floor(secs);
-                msec = (int)((secs - (float)sec) * 1000 + 0.5);
+                if (strcasecmp(val, "undef") == 0) {
+                    year = SAC_INT_UNDEF;
+                    month = SAC_INT_UNDEF;
+                    day = SAC_INT_UNDEF;
+                    hour = SAC_INT_UNDEF;
+                    min = SAC_INT_UNDEF;
+                    sec = SAC_INT_UNDEF;
+                    msec = SAC_INT_UNDEF;
+                } else {
+                    j = sscanf(val, "%d-%d-%dT%d:%d:%f",
+                               &year, &month, &day, &hour, &min, &secs);
+                    if (j != 6) {
+                        fprintf(stderr, "Error in time format\n");
+                        exit(-1);
+                    }
+                    sec  = floor(secs);
+                    msec = (int)((secs - (float)sec) * 1000 + 0.5);
+                }
             } else {
                 int index = sac_head_index(key);
                 if (index < 0) {
@@ -86,17 +102,29 @@ int main(int argc, char *argv[])
                     exit(-1);
                 } else if (index >=0 && index < SAC_HEADER_FLOATS) {
                     Fkeyval[fkey].index = index;
-                    Fkeyval[fkey].value = atof(val);
+                    if (strcasecmp(val, "undef") == 0)
+                        Fkeyval[fkey].value = SAC_FLOAT_UNDEF;
+                    else
+                        Fkeyval[fkey].value = atof(val);
                     fkey++;
                 } else if (index < SAC_HEADER_NUMBERS) {
                     /* index relative to the start of int fields */
                     Ikeyval[ikey].index = index - SAC_HEADER_FLOATS;
-                    Ikeyval[ikey].value = atoi(val);
+                    if (strcasecmp(val, "undef") == 0)
+                        Ikeyval[ikey].value = SAC_INT_UNDEF;
+                    else
+                        Ikeyval[ikey].value = atoi(val);
                     ikey++;
                 } else {
                     /* offset in bytes relative to the start of */
                     Ckeyval[ckey].offset =
                         (index - SAC_HEADER_NUMBERS) * SAC_HEADER_STRING_LENGTH;
+                    if (strcasecmp(val, "undef") == 0) {  /* undefined chars */
+                        if (strcasecmp(key, "kevnm") == 0)
+                            strcpy(val, SAC_CHAR16_UNDEF);
+                        else
+                            strcpy(val, SAC_CHAR8_UNDEF);
+                    }
                     strcpy(Ckeyval[ckey].value, val);
                     ckey++;
                 }
