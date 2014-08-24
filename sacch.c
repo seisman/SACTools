@@ -11,9 +11,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <time.h>
 #include "sacio.h"
 
+typedef struct datetime {
+    int year;
+    int month;
+    int day;
+    int jday;
+    int hour;
+    int min;
+    int sec;
+    int msec;
+} DATETIME;
+
 void usage(void);
+void datetime_init(DATETIME *dt);
+DATETIME datetime_read(char *string);
 
 void usage() {
     fprintf(stderr, "Change the value of selected head fields       \n");
@@ -54,8 +68,7 @@ int main(int argc, char *argv[])
     int i, j;
     char key[10];
     char val[80];
-    int year, month, day, hour, min, sec, msec;
-    float secs;
+    DATETIME dt;
     char *p;
     int time = 0;
     int fkey = 0;
@@ -65,6 +78,7 @@ int main(int argc, char *argv[])
     float *data;
     char sacfile[80];
     SACHEAD hd;
+
 
 
     int cal2jul(int year, int month, int day);
@@ -77,24 +91,10 @@ int main(int argc, char *argv[])
             sscanf(args, "%s %s", key, val);
             if (strcasecmp(key, "time") == 0) {
                 time = 1;
-                if (strcasecmp(val, "undef") == 0) {
-                    year = SAC_INT_UNDEF;
-                    month = SAC_INT_UNDEF;
-                    day = SAC_INT_UNDEF;
-                    hour = SAC_INT_UNDEF;
-                    min = SAC_INT_UNDEF;
-                    sec = SAC_INT_UNDEF;
-                    msec = SAC_INT_UNDEF;
-                } else {
-                    j = sscanf(val, "%d-%d-%dT%d:%d:%f",
-                               &year, &month, &day, &hour, &min, &secs);
-                    if (j != 6) {
-                        fprintf(stderr, "Error in time format\n");
-                        exit(-1);
-                    }
-                    sec  = floor(secs);
-                    msec = (int)((secs - (float)sec) * 1000 + 0.5);
-                }
+                if (strcasecmp(val, "undef") == 0)
+                    datetime_init(&dt);
+                else
+                    dt = datetime_read(val);
             } else {
                 int index = sac_head_index(key);
                 if (index < 0) {
@@ -158,15 +158,12 @@ int main(int argc, char *argv[])
             strcpy(pt+Ckeyval[j].offset, Ckeyval[j].value);
         }
         if (time) {
-            int jday;
-            jday = cal2jul(year, month, day);
-
-            hd.nzyear = year;
-            hd.nzjday = jday;
-            hd.nzhour = hour;
-            hd.nzmin  = min;
-            hd.nzsec  = sec;
-            hd.nzmsec = msec;
+            hd.nzyear = dt.year;
+            hd.nzjday = dt.jday;
+            hd.nzhour = dt.hour;
+            hd.nzmin  = dt.min;
+            hd.nzsec  = dt.sec;
+            hd.nzmsec = dt.msec;
         }
         write_sac(sacfile, hd, data);
         free(data);
@@ -175,7 +172,8 @@ int main(int argc, char *argv[])
 }
 
 /* convert month and day to jday */
-int cal2jul(int year, int month, int day) {
+int cal2jul(int year, int month, int day)
+{
     int noleap[12] = {0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334};
     int   leap[12] = {0, 31, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335};
 
@@ -183,4 +181,37 @@ int cal2jul(int year, int month, int day) {
         return leap[month-1] + day;
     else
         return noleap[month-1] + day;
+}
+
+DATETIME datetime_read(char *string)
+{
+    int num;
+    float secs;
+    DATETIME dt;
+
+    num = sscanf(string, "%d-%d-%dT%d:%d:%f",
+                 &dt.year, &dt.month, &dt.day, &dt.hour, &dt.min, &secs);
+
+    if (num != 6) {
+        fprintf(stderr, "Error in time format\n");
+        exit(-1);
+    }
+    dt.sec  = floor(secs);
+    dt.msec = (int)((secs - (float)dt.sec) * 1000 + 0.5);
+
+    dt.jday = cal2jul(dt.year, dt.month, dt.day);
+
+    return dt;
+}
+
+void datetime_init(DATETIME *dt)
+{
+    dt->year = SAC_INT_UNDEF;
+    dt->month = SAC_INT_UNDEF;
+    dt->day = SAC_INT_UNDEF;
+    dt->jday = SAC_INT_UNDEF;
+    dt->hour = SAC_INT_UNDEF;
+    dt->min = SAC_INT_UNDEF;
+    dt->sec = SAC_INT_UNDEF;
+    dt->msec = SAC_INT_UNDEF;
 }
