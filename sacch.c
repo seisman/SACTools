@@ -4,7 +4,10 @@
  *  Author: Dongdong Tian @ USTC
  *
  *  Revision:
- *      2014-08-23  Dongdong Tian   Initial Coding
+ *    2014-08-23  Dongdong Tian   Initial Coding
+ *    2014-08-25  Dongdong Tian   Features:
+ *                                1. value of time variables can be DATETIME format
+ *                                2. add allt option.
  *
  */
 #include <stdio.h>
@@ -18,6 +21,7 @@ void usage(void);
 void datetime_undef(DATETIME *dt);
 DATETIME datetime_read(char *string);
 DATETIME datetime_set_ref(SACHEAD hd);
+void datetime_add(DATETIME *dt, double span);
 
 void usage() {
     fprintf(stderr, "Change the value of selected head fields       \n");
@@ -25,6 +29,7 @@ void usage() {
     fprintf(stderr, "Usgae:                                         \n");
     fprintf(stderr, "   sacch key1=value1 key2=value2 ... sacfiles  \n");
     fprintf(stderr, "   sacch time=DATETIME sacfiles                \n");
+    fprintf(stderr, "   sacch allt=value sacfiles                   \n");
     fprintf(stderr, "                                               \n");
     fprintf(stderr, "Notes:                                         \n");
     fprintf(stderr, "   1. keys are sac head fields, like npts, evla\n");
@@ -33,15 +38,19 @@ void usage() {
     fprintf(stderr, "   4. DATETIME format: yyyy-mm-ddThh:mm:ss.mmm \n");
     fprintf(stderr, "   5. variables for time offset can use value  \n");
     fprintf(stderr, "      in DATETIME format                       \n");
+    fprintf(stderr, "   6. allt: add seconds to all defined header  \n");
+    fprintf(stderr, "      times, and subtract seconds from refer time\n");
     fprintf(stderr, "                                               \n");
     fprintf(stderr, "Examples:                                      \n");
     fprintf(stderr, "   sacch stla=10.2 stlo=20.2 kstnm=COLA seis1 seis2 \n");
     fprintf(stderr, "   sacch time=2010-02-03T10:20:35.200 seis1 seis2   \n");
     fprintf(stderr, "   sacch t7=2010-02-03T10:20:30.000 seis1           \n");
     fprintf(stderr, "   sacch t9=undef kt9=undef seis*                   \n");
+    fprintf(stderr, "   sacch allt=10.23 seis*                           \n");
 }
 
 #define MAX_HEAD 20
+#define FNEQ(x,y) (fabs(x-y)>0.1)
 int main(int argc, char *argv[])
 {
     struct {
@@ -70,6 +79,11 @@ int main(int argc, char *argv[])
     int ikey = 0;
     int ckey = 0;
     int file = 0;
+
+    /* ALLT option */
+    int lallt = 0;
+    float vallt = 0.0;
+
     float *data;
     char sacfile[80];
     SACHEAD hd;
@@ -92,6 +106,9 @@ int main(int argc, char *argv[])
                 datetime_undef(&dt);
             else
                 dt = datetime_read(val);
+        } else if (strcasecmp(key, "allt") == 0) {  /* ALLT */
+            lallt = 1;
+            vallt = (float)(atof(val));
         } else {                                /* HEAD */
             int index = sac_head_index(key);
             if (index < 0) {
@@ -136,7 +153,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (!(time || ikey || fkey || ckey) || !file) {
+    if (!(time || lallt || ikey || fkey || ckey) || !file) {
         usage();
         exit(-1);
     }
@@ -168,6 +185,7 @@ int main(int argc, char *argv[])
             char *pt = hd.kstnm;
             strcpy(pt+Ckeyval[j].offset, Ckeyval[j].value);
         }
+
         if (time) {
             hd.nzyear = dt.year;
             hd.nzjday = dt.doy;
@@ -176,6 +194,34 @@ int main(int argc, char *argv[])
             hd.nzsec  = dt.second;
             hd.nzmsec = dt.msec;
         }
+
+        if (lallt) {    /* ALLT option */
+            hd.b += vallt;
+            hd.e += vallt;
+            if (hd.nzyear != SAC_INT_UNDEF) {
+                datetime_add(&tref, -vallt);
+                hd.nzyear = tref.year;
+                hd.nzjday = tref.doy;
+                hd.nzhour = tref.hour;
+                hd.nzmin  = tref.minute;
+                hd.nzsec  = tref.second;
+                hd.nzmsec = tref.msec;
+            }
+            if (FNEQ(hd.a, SAC_FLOAT_UNDEF)) hd.a += vallt;
+            if (FNEQ(hd.f, SAC_FLOAT_UNDEF)) hd.f += vallt;
+            if (FNEQ(hd.o, SAC_FLOAT_UNDEF)) hd.o += vallt;
+            if (FNEQ(hd.t0, SAC_FLOAT_UNDEF)) hd.t0 += vallt;
+            if (FNEQ(hd.t1, SAC_FLOAT_UNDEF)) hd.t1 += vallt;
+            if (FNEQ(hd.t2, SAC_FLOAT_UNDEF)) hd.t2 += vallt;
+            if (FNEQ(hd.t3, SAC_FLOAT_UNDEF)) hd.t3 += vallt;
+            if (FNEQ(hd.t4, SAC_FLOAT_UNDEF)) hd.t4 += vallt;
+            if (FNEQ(hd.t5, SAC_FLOAT_UNDEF)) hd.t5 += vallt;
+            if (FNEQ(hd.t6, SAC_FLOAT_UNDEF)) hd.t6 += vallt;
+            if (FNEQ(hd.t7, SAC_FLOAT_UNDEF)) hd.t7 += vallt;
+            if (FNEQ(hd.t8, SAC_FLOAT_UNDEF)) hd.t8 += vallt;
+            if (FNEQ(hd.t9, SAC_FLOAT_UNDEF)) hd.t9 += vallt;
+        }
+
         write_sac(sacfile, hd, data);
         free(data);
     }
@@ -220,4 +266,12 @@ DATETIME datetime_set_ref(SACHEAD hd)
 
     return datetime_new(hd.nzyear, month, day,
                         hd.nzhour, hd.nzmin, hd.nzsec, hd.nzmsec);
+}
+
+void datetime_add(DATETIME *dt, double span)
+{
+    dt->epoch += span;
+
+    epoch2datetime(dt->epoch, &dt->year, &dt->doy, &dt->month, &dt->day,
+                   &dt->hour, &dt->minute, &dt->second, &dt->msec);
 }
