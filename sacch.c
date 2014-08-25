@@ -155,7 +155,7 @@ int main(int argc, char *argv[])
         for (j=0; j<fkey; j++) {
             float *pt = &hd.delta;
             if (Fkeyval[j].tmark==0) {
-                *(pt + Fkeyval[j].index) = Fkeyval[j].value;
+                *(pt + Fkeyval[j].index) = (float)Fkeyval[j].value;
             } else if (Fkeyval[j].tmark==1) {
                 *(pt + Fkeyval[j].index) = (float)(Fkeyval[j].value - tref.epoch);
             }
@@ -195,7 +195,7 @@ DATETIME datetime_read(char *string)
         fprintf(stderr, "Error in time format\n");
         exit(-1);
     }
-    second  = floor(secs);
+    second  = (int)(floor(secs));
     msec = (int)((secs - (float)second) * 1000 + 0.5);
 
     return datetime_new(year, month, day, hour, minute, second, msec);

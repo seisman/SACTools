@@ -77,7 +77,7 @@ void epoch2datetime(double epoch,
     int diy;
     double secleft;
 
-    *doy = (epoch / 86400.);
+    *doy = (int)(epoch / 86400.);
     secleft = mod(epoch,86400.0);
     *hour = *minute = *second = *msec = 0;
 
@@ -86,12 +86,12 @@ void epoch2datetime(double epoch,
             *doy = *doy - 1;        /* subtract a day */
             secleft += 86400;   /* add a day */
         }
-        *hour = secleft/3600;
+        *hour = (int)(secleft/3600);
         secleft = fmod(secleft,3600.0);
-        *minute = secleft/60;
-        *second = fmod(secleft,60.0);
+        *minute = (int)(secleft/60);
+        *second = (int)(fmod(secleft,60.0));
         secleft = fmod(secleft,60.0) - (*second);
-        *msec = 1000*(secleft+0.00049);
+        *msec = (int)(1000*(secleft+0.00049));
     }
 
     if(*doy >= 0){
