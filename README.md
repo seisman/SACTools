@@ -16,3 +16,4 @@ This is a collection of C codes relating with SAC files.
 
 - sac2col: Convert a SAC file to a one/two column table
 - sacch: Change the values of selected head fields
+- saclh: List the values of selected head fields
