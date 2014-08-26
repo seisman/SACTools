@@ -65,11 +65,11 @@ int main(int argc, char *argv[])
             if (cols==1) {
                 printf("DATA %s %f %f\n", sacfile, hd.delta, hd.b);
                 for (i=0; i<hd.npts; i++)
-                    printf("%e\n", data[i]);
+                    printf("%g\n", data[i]);
             } else if (cols==2) {
                 float time = hd.b;
                 for (i=0; i<hd.npts; i++) {
-                    printf("%e %e\n", time, data[i]);
+                    printf("%g %g\n", time, data[i]);
                     time += hd.delta;
                 }
             }
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 
         case IXY:
             for (i=0; i<hd.npts; i++)
-                printf("%e %e\n", data[i], data[i+hd.npts]);
+                printf("%g %g\n", data[i], data[i+hd.npts]);
             break;
 
         default:
