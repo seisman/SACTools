@@ -34,11 +34,6 @@ int main(int argc, char *argv[])
     float *data;
     SACHEAD hd;
 
-    if (argc==1) {
-        usage();
-        return -1;
-    }
-
     while ((c=getopt(argc, argv, "C:h")) != -1) {
         switch (c) {
             case 'C':
@@ -56,12 +51,9 @@ int main(int argc, char *argv[])
         }
     }
 
-    if (argc-optind == 0) {
-        fprintf(stderr, "Error: one SAC file is needed.\n");
-        return -1;
-    } else if (argc-optind > 1) {
-        fprintf(stderr, "Error: only one SAC file is needed.\n");
-        return -1;
+    if (argc-optind != 1) {
+        usage();
+        exit(-1);
     }
 
     strcpy(sacfile, argv[optind]);
