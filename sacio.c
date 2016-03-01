@@ -8,7 +8,8 @@
  *      write_sac        Write SAC binary data                                 *
  *      write_sac_xy     Write SAC binary XY data                              *
  *      new_sac_head     Create a new minimal SAC header                       *
- *      sac_head_offset  Find the offset of specified SAC head fields          *
+ *      sac_head_index   Find the offset of specified SAC head fields          *
+ *      issac            Check if a file in in SAC format                      *
  *                                                                             *
  *  Author: Dongdong Tian @ USTC                                               *
  *                                                                             *
@@ -19,6 +20,7 @@
  *                                  - read_sac_xy                              *
  *                                  - write_sac_xy                             *
  *                                  - sac_head_index                           *
+ *      2016-03-01  Dongdong Tian   Add new function: issac                    *
  *                                                                             *
  ******************************************************************************/
 
@@ -458,6 +460,35 @@ int sac_head_index(const char *name)
         if ((strcasecmp(name, fields[i]) == 0))  return i;
 
     return -1;
+}
+
+/*
+ *  issac
+ *
+ *  Description: check if a file is in SAC format
+ *
+ *  In:
+ *      const char *name    :   sac filename
+ *  Return:
+ *      -1 : fail
+ *      0  : is a SAC file
+ *      1  : not a SAC file
+ *
+ */
+int issac(const char *name)
+{
+    FILE *strm;
+    int nvhdr;
+
+    if ((strm = fopen(name, "rb")) == NULL) {
+        fprintf(stderr, "Unable to open %s\n", name);
+        return -1;
+    }
+
+    if (fseek(strm, SAC_VERSION_LOCATION * SAC_DATA_SIZEOF, SEEK_SET)) return 1;
+    if (fread(&nvhdr, sizeof(int), 1, strm) != 1) return 1;
+    if (check_sac_nvhdr(nvhdr) == -1) return 1;
+    else return 0;
 }
 
 /******************************************************************************

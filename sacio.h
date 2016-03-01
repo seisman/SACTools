@@ -377,5 +377,6 @@ int write_sac(const char *name, SACHEAD hd, const float *ar);
 int write_sac_xy(const char *name, SACHEAD hd, const float *xdata, const float *ydata);
 SACHEAD new_sac_head(float dt, int ns, float b0);
 int sac_head_index(const char *name);
+int issac(const char *name);
 
 #endif /* sacio.h */
