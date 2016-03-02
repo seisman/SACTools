@@ -471,8 +471,8 @@ int sac_head_index(const char *name)
  *      const char *name    :   sac filename
  *  Return:
  *      -1 : fail
- *      0  : is a SAC file
- *      1  : not a SAC file
+ *      TRUE  : is a SAC file
+ *      FALSE  : not a SAC file
  *
  */
 int issac(const char *name)
@@ -485,10 +485,10 @@ int issac(const char *name)
         return -1;
     }
 
-    if (fseek(strm, SAC_VERSION_LOCATION * SAC_DATA_SIZEOF, SEEK_SET)) return 1;
-    if (fread(&nvhdr, sizeof(int), 1, strm) != 1) return 1;
-    if (check_sac_nvhdr(nvhdr) == -1) return 1;
-    else return 0;
+    if (fseek(strm, SAC_VERSION_LOCATION * SAC_DATA_SIZEOF, SEEK_SET)) return FALSE;
+    if (fread(&nvhdr, sizeof(int), 1, strm) != 1) return FALSE;
+    if (check_sac_nvhdr(nvhdr) == -1) return FALSE;
+    else return TRUE;
 }
 
 /******************************************************************************
