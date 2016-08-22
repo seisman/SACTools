@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
     int c, i;
     int cols = 1;
     char sacfile[80];
-    float *data;
+    float *xdata, *ydata;
     SACHEAD hd;
 
     while ((c=getopt(argc, argv, "C:h")) != -1) {
@@ -57,27 +57,25 @@ int main(int argc, char *argv[])
     }
 
     strcpy(sacfile, argv[optind]);
-    if ((data = read_sac(sacfile, &hd)) == NULL)
-        exit(-1);
+    if (read_sac_head(sacfile, &hd)!=0) exit(-1);
 
     switch (hd.iftype) {
         case ITIME:
+            ydata = read_sac(sacfile, &hd);
             if (cols==1) {
                 printf("DATA %s %f %f\n", sacfile, hd.delta, hd.b);
                 for (i=0; i<hd.npts; i++)
-                    printf("%g\n", data[i]);
+                    printf("%g\n", ydata[i]);
             } else if (cols==2) {
-                float time = hd.b;
-                for (i=0; i<hd.npts; i++) {
-                    printf("%g %g\n", time, data[i]);
-                    time += hd.delta;
-                }
+                for (i=0; i<hd.npts; i++)
+                    printf("%g %g\n", hd.b+i*hd.delta, ydata[i]);
             }
             break;
 
         case IXY:
+            read_sac_xy(sacfile, &hd, xdata, ydata);
             for (i=0; i<hd.npts; i++)
-                printf("%g %g\n", data[i], data[i+hd.npts]);
+                printf("%g %g\n", xdata[i], ydata[i]);
             break;
 
         default:
@@ -85,6 +83,5 @@ int main(int argc, char *argv[])
             break;
     }
 
-    free(data);
     return 0;
 }
