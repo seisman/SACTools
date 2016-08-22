@@ -1,9 +1,8 @@
-CC = gcc
-CFLAGS = -Wall
+CFLAGS =
 
 BIN = ${HOME}/bin
 
-all: sac2col sacch saclh
+all: sac2col sacch saclh clean
 
 sac2col: sac2col.o sacio.o
 	$(CC) -o $(BIN)/$@ $^
