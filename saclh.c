@@ -76,12 +76,6 @@ int main(int argc, char *argv[])
     int j;
     SACHEAD hd;
 
-    /* special case:
-     *    if only one file, one head field, and output no filename,
-     *    omit the newline so that it's easier for scripts to handle output.
-     */
-    int newline = (argc-optind==1 && cnt==1 && noname);
-
     for (i=optind; i<argc; i++) {   /* loop over files */
         if ((read_sac_head(argv[i], &hd)) != 0) continue;
 
@@ -99,7 +93,7 @@ int main(int argc, char *argv[])
                 printf("%s ", pt + offset);
             }
         }
-        if (!newline) printf("\n");
+        printf("\n");
     }
 
     return 0;
