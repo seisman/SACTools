@@ -336,7 +336,7 @@ float *read_sac_pdw(const char *name, SACHEAD *hd, int tmark, float t1, float t2
     }
 
     tref = 0.;
-    if ((tmark>=-5&&tmark<=-2) || (tmark>=0 && tmark<=9)) {
+    if (tmark>=-5 && tmark<=9 && tmark!=-1) {
         tref = *((float *) hd + TMARK + tmark);
         if (fabs(tref+12345.)<0.1) {
             fprintf(stderr, "Time mark undefined in %s\n", name);
