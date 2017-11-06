@@ -20,13 +20,14 @@ void usage()
     fprintf(stderr, "List the values of selected head fields                \n");
     fprintf(stderr, "                                                       \n");
     fprintf(stderr, "Usage:                                                 \n");
-    fprintf(stderr, "  saclh -H head_fields_lists [-N] sacfiles             \n");
+    fprintf(stderr, "  saclh -H head_fields_list [-N] sacfiles              \n");
     fprintf(stderr, "                                                       \n");
     fprintf(stderr, "Options:                                               \n");
-    fprintf(stderr, "  -N:  do not output filename in colunm 1              \n");
+    fprintf(stderr, "  -H: list of SAC head fields                          \n");
+    fprintf(stderr, "  -N: do not output filename in 1st colunm             \n");
     fprintf(stderr, "                                                       \n");
     fprintf(stderr, "Note:                                                  \n");
-    fprintf(stderr, "  1. lists should be seperated by commas               \n");
+    fprintf(stderr, "  1. SAC head fields should be seperated by commas.    \n");
     fprintf(stderr, "                                                       \n");
     fprintf(stderr, "Examples:                                              \n");
     fprintf(stderr, "  saclh -H evla,evlo,stla,stlo seis1 seis2             \n");

@@ -36,13 +36,14 @@ Options:
 List the values of selected head fields
 
 Usage:
-  saclh -H head_fields_lists [-N] sacfiles
+  saclh -H head_fields_list [-N] sacfiles
 
 Options:
-  -N:  do not output filename in colunm 1
+  -H: list of SAC head fields
+  -N: do not output filename in 1st colunm
 
 Note:
-  1. lists should be seperated by commas
+  1. SAC head fields should be seperated by commas.
 
 Examples:
   saclh -H evla,evlo,stla,stlo seis1 seis2
