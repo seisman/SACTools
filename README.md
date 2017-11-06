@@ -12,7 +12,7 @@
   - `write_sac`: write SAC binary data
   - `write_sac_xy`: write SAC binary XY data
   - `new_sac_head`: create a minimal SAC header
-  - `sac_head_offset`: find offset of a SAC head field
+  - `sac_head_index`: return the index of a SAC head field
   - `issac`: Check if a file in in SAC format
 
 ## SAC Utilities
@@ -22,10 +22,10 @@
 ```
 Convert a SAC file to a one/two column table.
 
-Usage:                                       
-  sac2col [-C <cols>] [-h] sacifle           
+Usage:
+  sac2col [-C <cols>] [-h] sacifle
 
-Options:                                     
+Options:
   -C <cols>    output data in 1 or 2 column.
   -h           show usage.
 ```
@@ -33,46 +33,46 @@ Options:
 ### `saclh`
 
 ```
-List the values of selected head fields                
+List the values of selected head fields
 
-Usage:                                                 
-  saclh -H head_fields_lists [-N] sacfiles             
+Usage:
+  saclh -H head_fields_lists [-N] sacfiles
 
-Options:                                               
-  -N:  do not output filename in colunm 1              
+Options:
+  -N:  do not output filename in colunm 1
 
-Note:                                                  
-  1. lists should be seperated by commas               
+Note:
+  1. lists should be seperated by commas
 
-Examples:                                              
-  saclh -H evla,evlo,stla,stlo seis1 seis2             
-  saclh -H evla -N seis  
+Examples:
+  saclh -H evla,evlo,stla,stlo seis1 seis2
+  saclh -H evla -N seis
 ```
 
 ### `sacch`
 
 ```
-Change the value of selected head fields       
+Change the value of selected head fields
 
-Usgae:                                         
-   sacch key1=value1 key2=value2 ... sacfiles  
-   sacch time=DATETIME sacfiles                
-   sacch allt=value sacfiles                   
+Usgae:
+   sacch key1=value1 key2=value2 ... sacfiles
+   sacch time=DATETIME sacfiles
+   sacch allt=value sacfiles
 
-Notes:                                         
+Notes:
    1. keys are sac head fields, like npts, evla
-   2. values are integers, floats or strings   
+   2. values are integers, floats or strings
    3. key=undef to set key to undefinded value.
    4. DATETIME format: yyyy-mm-ddThh:mm:ss.mmm
-   5. variables for time offset can use value  
-      in DATETIME format                       
-   6. allt: add seconds to all defined header  
+   5. variables for time offset can use value
+      in DATETIME format
+   6. allt: add seconds to all defined header
       times, and subtract seconds from refer time
 
-Examples:                                      
+Examples:
    sacch stla=10.2 stlo=20.2 kstnm=COLA seis1 seis2
-   sacch time=2010-02-03T10:20:35.200 seis1 seis2   
-   sacch t7=2010-02-03T10:20:30.000 seis1           
-   sacch t9=undef kt9=undef seis*                   
-   sacch allt=10.23 seis*            
+   sacch time=2010-02-03T10:20:35.200 seis1 seis2
+   sacch t7=2010-02-03T10:20:30.000 seis1
+   sacch t9=undef kt9=undef seis*
+   sacch allt=10.23 seis*
 ```
