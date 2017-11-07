@@ -1,6 +1,5 @@
 # SAC Tools
 
-
 ## SAC I/O functions
 
 - `sacio.h`: Head file for SAC file format, and prototype for SAC IO functions.
@@ -17,7 +16,13 @@
 
 ## SAC Utilities
 
+- [sac2col](#sac2col): Convert a SAC file to a one/two column table.
+- [saclh](#saclh): List the values of selected head fields.
+- [sacch](#sacch): Change the value of selected head fields.
+- [sacmax](#sacmax): Get max amplitude of SAC files in a specified time window.
+
 ### `sac2col`
+
 
 ```
 Convert a SAC file to a one/two column table.
