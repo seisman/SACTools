@@ -77,3 +77,21 @@ Examples:
    sacch t9=undef kt9=undef seis*
    sacch allt=10.23 seis*
 ```
+
+### `sacmax`
+
+```
+Get max amplitude of SAC files in a specified time window.
+
+Usage:
+  sacmax [-Mmode] [-Ttmark/t0/t1] sacfiles
+
+  Options:
+    -M0   return maximum amplitude
+    -M1   return minumum amplitude
+    -M2   return maximum absolute amplitude
+    -M3   return absolute maximum amplitude
+    -M4   return maximum peak-to-peak amplitude
+    -T    specify time window.
+    -h    show usage.
+```
