@@ -31,7 +31,8 @@ int main(int argc, char *argv[])
     int c, i;
     int cols = 1;
     char sacfile[80];
-    float *xdata, *ydata;
+    float *xdata = NULL;
+    float *ydata = NULL;
     SACHEAD hd;
 
     while ((c=getopt(argc, argv, "C:h")) != -1) {
