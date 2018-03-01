@@ -186,10 +186,13 @@ int read_sac_xy(const char *name, SACHEAD *hd, float *xdata, float *ydata)
     npts = (size_t)hd->npts;
     if ((xdata = (float *)malloc(npts*SAC_DATA_SIZEOF)) == NULL) {
         fprintf(stderr, "Error in allocating memory for %s\n", name);
+        free(data);
         return -1;
     }
     if ((ydata = (float *)malloc(npts*SAC_DATA_SIZEOF)) == NULL) {
         fprintf(stderr, "Error in allocating memory for %s\n", name);
+        free(data);
+        free(xdata);
         return -1;
     }
 
