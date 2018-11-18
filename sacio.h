@@ -42,8 +42,8 @@
         05/04/13  Dongdong Tian   modify headers according to SAC v101.5
 *******************************************************************************/
 
-#ifndef _SACIO_H
-#define _SACIO_H
+#ifndef SACIO_H
+#define SACIO_H
 
 /*******************************************************************************
                         SAC header structure
