@@ -89,7 +89,7 @@ Examples:
 Get max amplitude of SAC files in a specified time window.
 
 Usage:
-  sacmax [-Mmode] [-Ttmark/t0/t1] sacfiles
+  sacmax -Mmode [-Ttmark/t0/t1] sacfiles
 
   Options:
     -M0   return maximum amplitude
@@ -100,3 +100,6 @@ Usage:
     -T    specify time window.
     -h    show usage.
 ```
+
+Examples:
+   sacmax -M0 -T0/5/10 seis1
