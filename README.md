@@ -100,3 +100,6 @@ Usage:
     -T    specify time window.
     -h    show usage.
 ```
+
+Examples:
+   sacmax -M0 -T0/5/10 seis1
